@@ -6,12 +6,12 @@ import InfoQuickChat from "./InfoQuickChat/InfoQuickChat";
 
 const ChatList = () => {
     return (
-        <div className="w-[344px] h-screen bg-white">
+        <div className="w-[23%] h-screen bg-white">
             <div className="header-chatlist flex gap-1 pb-5 p-2 pt-5">
                 <Input placeholder="Tìm kiếm" prefix={<SearchOutlined />} />
                 <div className="add-friends-groups flex gap-1">
-                    <IconChatList src="/public/chatlist/icons8-person-64.png"></IconChatList>
-                    <IconChatList src="/public/chatlist/icons8-group-80.png"></IconChatList>
+                    <IconChatList src="/public/chatlist/add-user.png" size="16px"></IconChatList>
+                    <IconChatList src="/public/chatlist/add-group.png" size="16px"></IconChatList>
                 </div>
             </div>
             <Seperate></Seperate>
