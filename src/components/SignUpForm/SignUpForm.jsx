@@ -1,7 +1,9 @@
 import { Formik, Form, ErrorMessage, Field } from "formik";
+import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 
 const SignUpForm = () => {
+    const navigate = useNavigate();
     return (
         <Formik
             initialValues={{
@@ -172,6 +174,15 @@ const SignUpForm = () => {
                             className="w-full p-3 mt-4 text-white bg-blue-500 rounded-md"
                         >
                             Submit
+                        </button>
+
+                        {/* Cancel Button */}   
+                        <button
+                            type="button"
+                            className="w-full p-3 mt-4 text-white bg-red-300 rounded-md border border-gray-200"
+                            onClick={() => navigate('/signin')}
+                        >
+                            Cancel
                         </button>
                     </div>
                 </div>
