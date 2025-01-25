@@ -3,7 +3,8 @@ import authApi from "../api/authApi";
 const authService = {
     login: async (credentials) => {
         const response = await authApi.login(credentials);
-        console.log("Response ~ login: ", response);
+        localStorage.setItem('token', response.data.data);
+        return response.data;
     },
     register: async (data) => {
         const response = await authApi.register(data);

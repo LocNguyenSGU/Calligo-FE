@@ -9,8 +9,18 @@ const SignInForm = () => {
         try {
             const data = await authService.login(values);
             console.log('Data ~ login ~ handleSignin: ', data);
+            navigate('/home');
         } catch (error) {
-            alert(error.response?.data?.message || 'Failed to login');
+            console.log(error);
+            if(error.response?.status == 401) {
+                alert('Invalid email or password');}
+            else if (error.response?.status == 404) {
+                alert('Email not found');
+            }else if (error.response?.status == 400) {
+                if(error.response.data.password) {
+                    alert(error.response.data.password);
+            }
+        }
         }
     }
         return (
