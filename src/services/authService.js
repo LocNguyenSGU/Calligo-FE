@@ -12,10 +12,15 @@ const authService = {
     },
     verify: async () => {
         const response = await authApi.verify();
+        if (response.status === 200) {
+            console.log("User is verified ~ ", response);
+            localStorage.setItem('infoUser', JSON.stringify(response.data.data));
+        }
         return response.data;
     },
     logout: () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('infoUser');
     },
 }
 export default authService;
