@@ -3,14 +3,21 @@ import HomeScreen from '../pages/logged_in/user/HomeScreen';
 import LoginScreen from '../pages/LoginScreen';
 import SignUpScreen from '../pages/SignUpScreen';
 import ProtectedRoute from './ProtectedRoute';
+import PageChat from '../components/Pages/PageChat';
+import Test from '../components/ChatList/Test';
 
 const AppRouter = () => {
     return (
         <div>
             <BrowserRouter>
                 <Routes>
-                    <Route path="/home" element={<ProtectedRoute> <HomeScreen></HomeScreen> </ProtectedRoute>} />
-                    {/* <Route path="/home" element={<HomeScreen />} /> */}
+                    <Route 
+                        path="/home" 
+                        element={<ProtectedRoute> <HomeScreen></HomeScreen> </ProtectedRoute>}>
+                        <Route path="chats" element={<PageChat />} />
+                        <Route path="contacts" element={<Test />} />
+                    </Route>
+
                     <Route path="/" element={<LoginScreen />} />
                     <Route path="/signin" element={<LoginScreen />} />
                     <Route path="/signup" element={<SignUpScreen />} />

@@ -45,6 +45,7 @@ instance.interceptors.response.use(
 
                     // Lấy token mới từ response
                     const newToken = refreshResponse.data.data;
+                    console.log('New token:', newToken);
                     localStorage.setItem('token', newToken);
 
                     // Cập nhật header Authorization với token mới

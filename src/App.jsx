@@ -7,9 +7,6 @@ import AppRouter from './routers/AppRouter';
 const App = () => {
   return (
     <div>
-        {/* <HomeScreen></HomeScreen> */}
-        {/* <SignUpScreen></SignUpScreen> */}
-        {/* <LoginScreen></LoginScreen> */}
         <AppRouter></AppRouter>
     </div>
   );

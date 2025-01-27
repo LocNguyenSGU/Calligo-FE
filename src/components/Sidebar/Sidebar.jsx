@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Avatar from '../shared/Avatar';
 import IconNavigaion from '../shared/IconNavigaion';
 import { useState } from 'react';
@@ -7,6 +7,10 @@ import ModalInfoAccount from '../modals/ModalInfoAccount';
 
 const Sidebar = () => {
     const navigation = useNavigate();
+    const location = useLocation();
+     // Kiểm tra đường dẫn hiện tại có chứa từ khóa không
+     const isPathActive = (keyword) => location.pathname.includes(keyword);
+
     const infoUser = JSON.parse(localStorage.getItem("infoUser"));
     const handleLogout = () => {
         if (window.confirm("Are you sure you want to logout?")) { // Thêm xác nhận
@@ -41,8 +45,8 @@ const Sidebar = () => {
                 <ModalInfoAccount infoUser={infoUser}></ModalInfoAccount>
                 
             </Modal>
-            <IconNavigaion src="/sidebar/icons8-chat-100.png" />
-            <IconNavigaion src="/public/sidebar/icons8-contact-96.png" />
+            <Link to="/home/chats"><IconNavigaion src="/sidebar/icons8-chat-100.png" isActive={isPathActive('chats')}/></Link>
+            <Link to="/home/contacts"><IconNavigaion src="/sidebar/icons8-contact-96.png" isActive={isPathActive('contacts')}/></Link>
             <IconNavigaion src="/sidebar/icons8-setting-100.png" />
             <div onClick={handleLogout}>
                 <IconNavigaion src="/public/sidebar/logout.png" />

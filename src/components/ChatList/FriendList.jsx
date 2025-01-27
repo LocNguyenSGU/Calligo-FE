@@ -1,7 +1,7 @@
 import Seperate from "../shared/Seperate";
 import InfoQuickChat from "./InfoQuickChat/InfoQuickChat";
 
-const ChatList = () => {
+const FriendList = () => {
     return (
         <div className="h-screen bg-white">
             {/* <HeaderChatList></HeaderChatList> */}
@@ -10,7 +10,7 @@ const ChatList = () => {
                 <InfoQuickChat 
                     img="/public/sidebar/boy.png" isActive = {true}
                     title="An Long" nameSenderLast="you"
-                    contentLast="Chưa biết nữa" timeUpdateLast="2 ngày">
+                    contentLast="Chưa biết ok nè" timeUpdateLast="2 ngày">
                 </InfoQuickChat>
                 <InfoQuickChat 
                     img="/public/sidebar/boy.png" 
@@ -87,4 +87,4 @@ const ChatList = () => {
     );
 };
 
-export default ChatList;
+export default FriendList;

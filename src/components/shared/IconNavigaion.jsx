@@ -1,8 +1,12 @@
 /* eslint-disable react/prop-types */
-const IconNavigaion = ({ src, alt, size = "28px" }) => {
+const IconNavigaion = ({ src, alt, size = "28px", isActive = false }) => {
     const defaultIconImage = "";
     return (
-      <div className="p-2 rounded-md bg-gray-200 hover:bg-gray-400 cursor-pointer w-12 h-12 block">
+      <div
+      className={`${
+        isActive ? "bg-red-400 hover:bg-red-400" : "bg-red-100 hover:bg-red-200"
+      } p-2 rounded-md  cursor-pointer w-12 h-12 flex items-center justify-center`}
+      >
         <img
           src={src || defaultIconImage}
           alt={alt || "icon"}

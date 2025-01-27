@@ -5,7 +5,7 @@ import IconChatList from "../shared/IconChatList";
 
 const WindowChat = ({ src, title, isGroup = false, lastTime }) => {
     return (
-        <div className="w-[54%] h-screen bg-gray-200">
+        <div className="w-[66%] h-screen bg-gray-200">
             <div className="header-window-chat flex justify-between items-center p-3 bg-white border border-gray-200 border-t-0">
                 <div className="header-info flex gap-2">
                     <Avatar src="/public/sidebar/woman.png"></Avatar>
