@@ -10,12 +10,12 @@ const authService = {
         const response = await authApi.register(data);
         console.log("Response ~ register: ", response);
     },
+    verify: async () => {
+        const response = await authApi.verify();
+        return response.data;
+    },
     logout: () => {
         localStorage.removeItem('token');
     },
-    isAuthenticated: () => {
-        return localStorage.getItem('token') ? true : false;
-    }
-
 }
 export default authService;
