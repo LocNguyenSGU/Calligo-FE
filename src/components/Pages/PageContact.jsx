@@ -12,7 +12,7 @@ const PageContact = () => {
             <HeaderChatList></HeaderChatList>
             <NavContact></NavContact>
         </div>
-        <div className='w-[77%] bg-blue-200'>
+        <div className='w-[77%] bg-gray-200'>
             <Outlet></Outlet>
         </div>
     </>
