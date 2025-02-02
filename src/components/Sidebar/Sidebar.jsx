@@ -8,8 +8,13 @@ import ModalInfoAccount from '../modals/ModalInfoAccount';
 const Sidebar = () => {
     const navigation = useNavigate();
     const location = useLocation();
-     // Kiểm tra đường dẫn hiện tại có chứa từ khóa không
-     const isPathActive = (keyword) => location.pathname.includes(keyword);
+    // Kiểm tra đường dẫn hiện tại có phải là "/home" hoặc chứa từ khóa cụ thể
+    const isPathActive = (keyword) => {
+        if (location.pathname === "/home") {
+            return keyword === "chats"; // Nếu đang ở /home, chỉ "chats" được active
+        }
+        return location.pathname.includes(keyword);
+    };
 
     const infoUser = JSON.parse(localStorage.getItem("infoUser"));
     const handleLogout = () => {
@@ -41,12 +46,12 @@ const Sidebar = () => {
                 onCancel={hideModal}
                 okText="OK"
                 cancelText="Cancel"
-            >   
+            >
                 <ModalInfoAccount infoUser={infoUser}></ModalInfoAccount>
-                
+
             </Modal>
-            <Link to="/home/chats"><IconNavigaion src="/sidebar/icons8-chat-100.png" isActive={isPathActive('chats')}/></Link>
-            <Link to="/home/contacts"><IconNavigaion src="/sidebar/icons8-contact-96.png" isActive={isPathActive('contacts')}/></Link>
+            <Link to="/home/chats"><IconNavigaion src="/sidebar/icons8-chat-100.png" isActive={isPathActive('chats')} /></Link>
+            <Link to="/home/contacts"><IconNavigaion src="/sidebar/icons8-contact-96.png" isActive={isPathActive('contacts')} /></Link>
             <IconNavigaion src="/sidebar/icons8-setting-100.png" />
             <div onClick={handleLogout}>
                 <IconNavigaion src="/public/sidebar/logout.png" />

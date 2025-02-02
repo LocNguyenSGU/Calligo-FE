@@ -4,27 +4,44 @@ import LoginScreen from '../pages/LoginScreen';
 import SignUpScreen from '../pages/SignUpScreen';
 import ProtectedRoute from './ProtectedRoute';
 import PageChat from '../components/Pages/PageChat';
-import Test from '../components/ChatList/Test';
+import PageContact from '../components/Pages/PageContact';
+import WindowFriendRequest from '../components/Contact/WindowFriendRequest/WindowFriendRequest';
+import WindowGroupList from '../components/Contact/WindowGroupList/WindowGroupList';
+import WindowFriendList from '../components/Contact/WindowFriendList/WindowFriendList';
 
 const AppRouter = () => {
     return (
-        <div>
-            <BrowserRouter>
-                <Routes>
-                    <Route 
-                        path="/home" 
-                        element={<ProtectedRoute> <HomeScreen></HomeScreen> </ProtectedRoute>}>
-                        <Route path="chats" element={<PageChat />} />
-                        <Route path="contacts" element={<Test />} />
-                    </Route>
+        <BrowserRouter>
+            <Routes>
+                {/* Protected Route để đảm bảo user đã đăng nhập */}
+                <Route 
+                    path="/home" 
+                    element={
+                        <ProtectedRoute> 
+                            <HomeScreen /> 
+                        </ProtectedRoute>
+                    }
+                >
+                    {/* Mặc định vào PageChat */}
+                    <Route index element={<PageChat />} />
+                    <Route path="chats" element={<PageChat />} />
 
-                    <Route path="/" element={<LoginScreen />} />
-                    <Route path="/signin" element={<LoginScreen />} />
-                    <Route path="/signup" element={<SignUpScreen />} />
-                    <Route path="*" element={<div>404 - Page Not Found</div>} />
-                </Routes>
-            </BrowserRouter>
-        </div>
+                    {/* Group các route liên quan đến Contacts */}
+                    <Route path="contacts" element={<PageContact />}>
+                        <Route index element={<WindowFriendList />} />
+                        <Route path="friend-requestes" element={<WindowFriendRequest />} />
+                        <Route path="group-list" element={<WindowGroupList />} />
+                        <Route path="friend-list" element={<WindowFriendList />} />
+                    </Route>
+                </Route>
+
+                {/* Các route ngoài Home */}
+                <Route path="/" element={<LoginScreen />} />
+                <Route path="/signin" element={<LoginScreen />} />
+                <Route path="/signup" element={<SignUpScreen />} />
+                {/* <Route path="*" element={<div>404 - Page Not Found</div>} /> */}
+            </Routes>
+        </BrowserRouter>
     );
 };
 
