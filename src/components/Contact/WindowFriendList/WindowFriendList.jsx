@@ -63,7 +63,7 @@ const WindowFriendList = () => {
                 </div>
             </div>
             <span className="font-normal text-sm p-4 block">Bạn bè ({friends.length})</span>
-            <div className="body bg-green-100 h-screen w-100% rounded-md ml-4">
+            <div className="body bg-white h-screen w-100% rounded-md ml-4">
                 <div className="header-action flex gap-3 p-3">
                     <div className="w-[80%]">
                         <Input 
@@ -75,7 +75,7 @@ const WindowFriendList = () => {
                     <div className="w-[20%]">
                         <Select
                             value={sort}
-                            style={{ width: 120 }}
+                            style={{ width: 200 }}
                             onChange={setSort}
                             options={[
                                 { value: 'Increase', label: 'Tăng dần (A-Z)' },
@@ -86,11 +86,35 @@ const WindowFriendList = () => {
                 </div>
                 <div className="body-list mt-2">
                     {loading ? (
-                        <>
-                            <LoadingSkeleton width="100%" height="15px" radius="4px" />
-                            <LoadingSkeleton width="100%" height="15px" radius="4px" />
-                            <LoadingSkeleton width="100%" height="15px" radius="4px" />
-                        </>
+                       <>
+                       <div className="item flex gap-3 items-center py-3 hover:bg-gray-100 pl-3 cursor-pointer">
+                           <div className="w-[50px] h-[50px] rounded-full border border-gray-400">
+                               <LoadingSkeleton width="100%" height="100%" radius="50%"></LoadingSkeleton>
+                           </div>
+                           <span className="font-semibold text-base">
+                               <LoadingSkeleton width="300px" height="15px" radius="4px"></LoadingSkeleton>
+                           </span>
+                       </div>
+                       <div className="h-[1px] bg-gray-300 w-[90%] my-0 mx-auto"></div>
+                       <div className="item flex gap-3 items-center py-3 hover:bg-gray-100 pl-3 cursor-pointer">
+                           <div className="w-[50px] h-[50px] rounded-full border border-gray-400">
+                               <LoadingSkeleton width="100%" height="100%" radius="50%"></LoadingSkeleton>
+                           </div>
+                           <span className="font-semibold text-base">
+                               <LoadingSkeleton width="300px" height="15px" radius="4px"></LoadingSkeleton>
+                           </span>
+                       </div>
+                       <div className="h-[1px] bg-gray-300 w-[90%] my-0 mx-auto"></div>
+                       <div className="item flex gap-3 items-center py-3 hover:bg-gray-100 pl-3 cursor-pointer">
+                           <div className="w-[50px] h-[50px] rounded-full border border-gray-400">
+                               <LoadingSkeleton width="100%" height="100%" radius="50%"></LoadingSkeleton>
+                           </div>
+                           <span className="font-semibold text-base">
+                               <LoadingSkeleton width="300px" height="15px" radius="4px"></LoadingSkeleton>
+                           </span>
+                       </div>
+                       <div className="h-[1px] bg-gray-300 w-[90%] my-0 mx-auto"></div>
+                   </>
                     ) : (
                         Object.keys(grouped).length === 0 ? (
                             <span>Không có bạn bè</span>

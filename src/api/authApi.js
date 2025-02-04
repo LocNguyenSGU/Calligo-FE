@@ -21,5 +21,10 @@ const authApi = {
         });
         return response;
     },
+    getAccountByPhone: async (phone) => {
+        const response = await axios.get(`${prefixAPI}/accounts/phone/${phone}`);
+        return response 
+    },
+
 }
 export default authApi;

@@ -22,5 +22,10 @@ const authService = {
         localStorage.removeItem('token');
         localStorage.removeItem('infoUser');
     },
+    getAccountByPhone: async(phone) => {
+        const response = await authApi.getAccountByPhone(phone);
+        console.log("Response getAccountByPhone: ", response.data)
+        return response.data;
+    }
 }
 export default authService;
