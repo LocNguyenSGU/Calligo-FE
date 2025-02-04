@@ -1,3 +1,16 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.skeleton {
+    background-color: #eee;
+    background-image: linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%);
+    background-size: 200% 100%;
+    animation: shine 1.5s linear infinite; /* Thêm 's' vào thời gian */
+}
+
+@keyframes shine {
+    to {
+        background-position-x: -200%;   
+    }
+}

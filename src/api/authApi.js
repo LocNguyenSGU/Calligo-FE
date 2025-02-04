@@ -1,5 +1,6 @@
 import axios from '../utils/axiosConfig';
-const prefixAPI = "http://localhost:8089/api/v1/user-requests";
+import { addressAPI } from '../utils/prefixAPI';
+const prefixAPI = `${addressAPI}/api/v1/user-service`;
 const authApi = {
     login: async (credentials) => {
         const response = axios.post(`${prefixAPI}/auth/login`, credentials)
