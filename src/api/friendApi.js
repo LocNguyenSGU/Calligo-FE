@@ -16,5 +16,14 @@ const friendApi = {
         });
         return response;
     },
+    getFriendRequestesByIdAccountReceiveAndName: async (idAccountReceive, name, sort) => {
+        const response = await axios.get(`${prefixAPI}/friend-requestes/account-receive/${idAccountReceive}`, {
+            params: { 
+                name: name,
+                sortDirection: sort
+            }
+        });
+        return response;
+    },
 }
 export default friendApi;

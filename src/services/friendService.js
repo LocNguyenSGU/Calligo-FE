@@ -29,6 +29,16 @@ const friendService = {
             console.error("Error fetching friends:", error);
             throw error;
         }
+    },
+
+    getFriendRequestesByIdAccountReceiveAndName: async (idAccountReceive, name, sort) => {
+        try {
+            const response = await friendApi.getFriendRequestesByIdAccountReceiveAndName(idAccountReceive, name, sort)
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching friends:", error);
+            throw error;
+        }
     }
 };
 
