@@ -44,7 +44,7 @@ const HeaderChatList = () => {
             }
             setInfoUser(null);
         } finally {
-            setLoading(true);
+            setLoading(false);
         }
     };
     return (

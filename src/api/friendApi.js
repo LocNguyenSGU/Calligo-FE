@@ -10,9 +10,9 @@ const friendApi = {
         const response = await axios.put(`${prefixAPI}/friend-requestes/${idFriendRequest}/status`, data);
         return response
     },
-    getFriendshipByIdAccountAndName: async (idAccount, name) => {
+    getFriendshipByIdAccountAndName: async (idAccount, name, page) => {
         const response = await axios.get(`${prefixAPI}/friends/idAccount/${idAccount}`, {
-            params: { name: name }
+            params: { page: page, name: name }
         });
         return response;
     },

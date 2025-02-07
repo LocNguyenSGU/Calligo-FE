@@ -65,7 +65,7 @@ const WindowFriendRequest = () => {
             </div>
             <span className="font-normal text-sm p-4 block">Lời mời kết bạn nhân được ({totalFriendRequestes})</span>
 
-            <div className="body bg-green-100 h-screen w-100% rounded-md ml-4">
+            <div className="body bg-white h-screen w-100% rounded-md ml-4">
                 <div className="header-action flex gap-3 p-3">
                     <div className="w-[80%]">
                         <Input

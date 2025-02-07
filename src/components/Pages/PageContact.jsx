@@ -8,11 +8,11 @@ import WindowGroupList from '../Contact/WindowGroupList/WindowGroupList';
 const PageContact = () => {
     return (
         <>
-        <div className='flex flex-col w-[23%]'>
+        <div className='flex flex-col w-[23%] ml-16 fixed'>
             <HeaderChatList></HeaderChatList>
             <NavContact></NavContact>
         </div>
-        <div className='w-[77%] bg-gray-200'>
+        <div className='w-[73%] bg-gray-200 ml-[395px] fixed'>
             <Outlet></Outlet>
         </div>
     </>

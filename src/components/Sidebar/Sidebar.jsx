@@ -35,7 +35,7 @@ const Sidebar = () => {
     };
 
     return (
-        <div className="flex flex-col w-16 h-screen bg-red-100 gap-4 justify-items-center items-center pt-5">
+        <div className="flex flex-col w-16 h-screen bg-red-100 gap-4 justify-items-center items-center pt-5 fixed top-0 left-0">
             <div onClick={showModal}>
                 <Avatar gender='female' />
             </div>

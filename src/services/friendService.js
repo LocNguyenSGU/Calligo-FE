@@ -21,9 +21,9 @@ const friendService = {
         }
     },
 
-    getFriendshipByIdAccountAndName: async (idAccount, name) => {
+    getFriendshipByIdAccountAndName: async (idAccount, name, page) => {
         try {
-            const response = await friendApi.getFriendshipByIdAccountAndName(idAccount, name);
+            const response = await friendApi.getFriendshipByIdAccountAndName(idAccount, name, page);
             return response.data;
         } catch (error) {
             console.error("Error fetching friends:", error);
