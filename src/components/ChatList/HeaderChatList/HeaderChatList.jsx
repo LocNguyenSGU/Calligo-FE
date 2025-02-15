@@ -15,10 +15,12 @@ const HeaderChatList = () => {
     const [infoUser, setInfoUser] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [visibleInputFriend, setVisibleInputFriend] = useState(false);
     const [note, setNote] = useState("");
     const [currentUser, setCurrentUser] = useState({});
-    const [visibleInputCancel, setVisibleInputCancel] = useState(false);
+    const [showAddFriend, setShowAddFriend] = useState(false);
+    const [showCancelRequest, setShowCancelRequest] = useState(false);
+    const [showNote, setShowNote] = useState(false);
+    const [showMessage, setShowMessage]= useState("")
 
     const showModal = () => {
         setOpen(true);
@@ -26,7 +28,6 @@ const HeaderChatList = () => {
         setInfoUser(null);
         setPhone("");
         setNote("")
-        setVisibleInputFriend(false);
     };
 
     const handleCancel = () => {
@@ -35,7 +36,6 @@ const HeaderChatList = () => {
         setError("");
         setNote("")
         setOpen(false);
-        setVisibleInputFriend(false);
     };
 
     const handleSearch = async () => {
@@ -50,9 +50,13 @@ const HeaderChatList = () => {
             setInfoUser(response.data);
             console.log("THu can xem", response)
             setError("");
-            setVisibleInputFriend(!(response.data?.friendshipResponse?.areFriends || response.data?.friendshipResponse?.yourself));
-            // const responseStatus = await friendService.getFriendRequestStatusBetweenTwoIdAccount(currentUser?.idAccount, response.data?.accountBasicResponse?.idAccount)
-            // console.log("get status two account: ", responseStatus)
+            setShowAddFriend(!(response.data?.friendshipResponse?.areFriends || response.data?.friendshipResponse?.yourself));
+            setShowMessage((response.data?.friendshipResponse?.areFriends || response.data?.friendshipResponse?.yourself));
+            if(showMessage) {
+                setShowNote(false)
+            }else {
+                setShowNote(true)
+            }
         } catch (e) {
             if (e?.status === 404) {
                 setError("Không tìm thấy tài khoản");
@@ -65,6 +69,7 @@ const HeaderChatList = () => {
             setLoading(false);
         }
     };
+    console.log("FALSE CHO KET BAN", showAddFriend)
     useEffect(() => {
         let storedUser = localStorage.getItem("infoUser");
         if (!storedUser) {
@@ -74,12 +79,12 @@ const HeaderChatList = () => {
         const parsedUser = JSON.parse(storedUser);
         setCurrentUser(parsedUser);
     }, []);
-    
+
     useEffect(() => {
         if (!currentUser?.idAccount || !infoUser?.accountBasicResponse?.idAccount) {
             return;
         }
-    
+
         const fetchStatus = async () => {
             try {
                 const responseStatus = await friendService.getFriendRequestStatusBetweenTwoIdAccount(
@@ -87,27 +92,30 @@ const HeaderChatList = () => {
                     infoUser.accountBasicResponse.idAccount
                 );
                 console.log("get status two account: ", responseStatus);
-                if(responseStatus.data == "SENT") {
-                    setVisibleInputCancel(true);
-                }else {
-                    setVisibleInputCancel(false);
+                if (responseStatus.data == "SENT") {
+                    setShowNote(true)
+                    setShowCancelRequest(true)
+                    setShowAddFriend(false)
+                } else {
+                    setShowCancelRequest(false)
+                    // setShowAddFriend(true)
                 }
             } catch (error) {
-                if(error.status == 404) {
+                if (error.status == 404) {
                     console.log("OK GOOG")
                 } else {
                     console.error("Lỗi khi lấy trạng thái lời mời kết bạn", error);
                 }
             }
         };
-    
+
         fetchStatus();
     }, [infoUser, currentUser]);
 
     const handleCreateFriendRequest = async () => {
         let currentUser = localStorage.getItem("infoUser")
-        
-        if(!currentUser) {
+
+        if (!currentUser) {
             message.error("Đã xảy ra lỗi, vui lòng thử lại!");
             return;
         }
@@ -128,15 +136,27 @@ const HeaderChatList = () => {
             const response = await friendService.createFriendRequest(data)
             if (response.code === 200) {
                 message.success("Gửi lời mời kết bạn thành công!");
+                setShowNote(true)
+                setShowCancelRequest(true)
+                setShowAddFriend(false)
+                setShowMessage(false)
             } else {
-                message.error("Gửi lời mời kết bạn thành công!");
+                setShowNote(true)
+                setShowCancelRequest(false)
+                setShowAddFriend(true)
+                message.error("Gửi lời mời kết bạn không thành công!");
             }
-        }catch(error) {
+        } catch (error) {
             console.error("Lỗi khi gửi lời mời kết bạn", error);
             message.error("Đã xảy ra lỗi, vui lòng thử lại!");
         }
     }
-    
+
+    useEffect(() => {
+        if(showMessage) {
+            setShowNote(false)
+        }
+    }, [showMessage])
 
     return (
         <div>
@@ -187,22 +207,22 @@ const HeaderChatList = () => {
                                             </span>
                                         </div>
                                         <div className="flex gap-3 mt-3">
-                                            <ConditionRender isVisible={!visibleInputFriend}>
+                                            <ConditionRender isVisible={showMessage}>
                                                 <Button>Nhắn tin</Button>
                                             </ConditionRender>
-                                            <ConditionRender isVisible={visibleInputFriend}>
+                                            <ConditionRender isVisible={showAddFriend}>
                                                 <div onClick={handleCreateFriendRequest}>
                                                     <Button type="primary">Kết bạn</Button>
                                                 </div>
                                             </ConditionRender>
-                                            <ConditionRender isVisible={visibleInputCancel}>
+                                            <ConditionRender isVisible={showCancelRequest}>
                                                 <div>
                                                     <Button type="dashed">Huỷ lời mời</Button>
                                                 </div>
                                             </ConditionRender>
                                         </div>
                                     </div>
-                                    <ConditionRender isVisible={visibleInputFriend}>
+                                    <ConditionRender isVisible={showNote}>
                                         <div className="mt-3">
                                             <TextArea
                                                 placeholder="Nhập tin nhắn lời mời kết bạn"
