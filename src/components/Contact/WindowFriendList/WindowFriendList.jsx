@@ -13,15 +13,16 @@ const WindowFriendList = () => {
     const [name, setName] = useState("");
     const nameDebounce = useDebounce(name, 500);
     const [sort, setSort] = useState("Increase");
+    const [page, setPage] = useState(0)
 
     useEffect(() => {
         const fetchFriends = async () => {
             try {
                 setLoading(true);
-                const response = await friendService.getFriendshipByIdAccountAndName(1, nameDebounce);
+                const response = await friendService.getFriendshipByIdAccountAndName(1, nameDebounce, page, 40);
 
                 if (!response || !response.data?.content) {
-                    setFriends([]);
+                    setFriends([]); 
                     setGrouped({});
                     return;
                 }
@@ -52,7 +53,7 @@ const WindowFriendList = () => {
         };
 
         fetchFriends();
-    }, [nameDebounce, sort]); // Gọi lại khi `nameDebounce` hoặc `sort` thay đổi
+    }, [nameDebounce, page, sort ]); // Gọi lại khi `nameDebounce` hoặc `sort` thay đổi
 
     return (
         <div className='bg-gray-200'>
@@ -84,7 +85,7 @@ const WindowFriendList = () => {
                         />
                     </div>
                 </div>
-                <div className="body-list mt-2">
+                <div className="body-list mt-2 overflow-auto h-[75%]">
                     {loading ? (
                         <>
                             <div className="item flex gap-3 items-center py-3 hover:bg-gray-100 pl-3 cursor-pointer">

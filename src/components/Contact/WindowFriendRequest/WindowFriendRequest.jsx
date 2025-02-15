@@ -18,7 +18,7 @@ const WindowFriendRequest = () => {
         const fetchFriends = async () => {
             try {
                 setLoading(true);
-                const response = await friendService.getFriendRequestesByIdAccountReceiveAndName(2, nameDebounce, sortDebounce);
+                const response = await friendService.getFriendRequestesByIdAccountReceiveAndName(3, nameDebounce, sortDebounce);
 
                 if (!response || !response.data?.content) {
                     setFriendRequest([]);
@@ -132,7 +132,8 @@ const WindowFriendRequest = () => {
                         </div>
                     </div>
                 </>) : (
-                    friendRequest?.data?.content.map((e) => (
+                    <div className="body-list mt-2 overflow-auto h-[75%]">
+                        {friendRequest?.data?.content.map((e) => (
                         <>
                             <div key={e.idFriendRequest} style={{ display: handledRequests.includes(e.idFriendRequest) ? 'none' : 'block' }}>
                                 <div className="item flex justify-between items-center py-3 hover:bg-gray-100 pl-3 cursor-pointer">
@@ -143,7 +144,7 @@ const WindowFriendRequest = () => {
                                         <span className="font-semibold text-base">{e.firstName} {e.lastName}</span>
                                     </div>
                                     <div className="flex gap-3 mt-3 pr-16">
-                                        <Button onClick={() => handleUpdateStatusFriendRequest(e.idFriendRequest, { status: "CANCEL" })}>
+                                        <Button onClick={() => handleUpdateStatusFriendRequest(e.idFriendRequest, { status: "REJECTED" })}>
                                             Từ chối
                                         </Button>
                                         <Button type="primary" onClick={() => handleUpdateStatusFriendRequest(e.idFriendRequest, { status: "ACCEPTED" })}>
@@ -154,7 +155,8 @@ const WindowFriendRequest = () => {
                                 <div className="h-[1px] bg-gray-300 w-[90%] my-0 mx-auto"></div>
                             </div>
                         </>
-                    ))
+                        ))}
+                    </div>
                 )}
                 {friendRequest.length == 0 && loading == false && <span className="text-red-500 mt-3 block ml-3">Không có lời mời kết bạn</span>}
             </div>

@@ -697,8 +697,16 @@ video {
   height: calc(100% - 68px);
 }
 
+.h-full {
+  height: 100%;
+}
+
 .h-screen {
   height: 100vh;
+}
+
+.h-\[75\%\] {
+  height: 75%;
 }
 
 .w-12 {
@@ -759,10 +767,6 @@ video {
 
 .w-\[73\%\] {
   width: 73%;
-}
-
-.w-\[77\%\] {
-  width: 77%;
 }
 
 .w-\[80\%\] {
@@ -979,6 +983,10 @@ video {
   padding-bottom: 0.75rem;
 }
 
+.pb-24 {
+  padding-bottom: 6rem;
+}
+
 .pb-3 {
   padding-bottom: 0.75rem;
 }
@@ -1001,6 +1009,10 @@ video {
 
 .pt-5 {
   padding-top: 1.25rem;
+}
+
+.pb-28 {
+  padding-bottom: 7rem;
 }
 
 .text-center {

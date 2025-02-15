@@ -25,6 +25,10 @@ const authApi = {
         const response = await axios.get(`${prefixAPI}/accounts/phone/${phone}`);
         return response 
     },
+    getInfoAccounBasicByPhoneToFriend: async (phone, idAccountSource, idAccountTarget) => {
+        const response = await axios.get(`${addressAPI}/api/v1/apigateway/friend-user/phone/${phone}/idAccountSource/${idAccountSource}/idAccountTarget/${idAccountTarget}`);
+        return response 
+    }
 
 }
 export default authApi;

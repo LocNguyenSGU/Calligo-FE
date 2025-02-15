@@ -26,6 +26,11 @@ const authService = {
         const response = await authApi.getAccountByPhone(phone);
         console.log("Response getAccountByPhone: ", response.data)
         return response.data;
+    },
+    getInfoAccounBasicByPhoneToFriend: async(phone, idAccountSource, idAccountTarget) => {
+        const response = await authApi.getInfoAccounBasicByPhoneToFriend(phone, idAccountSource, idAccountTarget);
+        console.log("Response getAccountByPhone: ", response.data)
+        return response.data;
     }
 }
 export default authService;

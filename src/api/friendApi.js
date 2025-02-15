@@ -10,20 +10,26 @@ const friendApi = {
         const response = await axios.put(`${prefixAPI}/friend-requestes/${idFriendRequest}/status`, data);
         return response
     },
-    getFriendshipByIdAccountAndName: async (idAccount, name, page) => {
+    getFriendshipByIdAccountAndName: async (idAccount, name, page, size=10, sort="asc") => {
         const response = await axios.get(`${prefixAPI}/friends/idAccount/${idAccount}`, {
-            params: { page: page, name: name }
+            params: { page: page, name: name, size:size, sort:sort }
         });
         return response;
     },
-    getFriendRequestesByIdAccountReceiveAndName: async (idAccountReceive, name, sort) => {
+    getFriendRequestesByIdAccountReceiveAndName: async (idAccountReceive, name, sort, page, size=10, ) => {
         const response = await axios.get(`${prefixAPI}/friend-requestes/account-receive/${idAccountReceive}`, {
             params: { 
                 name: name,
-                sortDirection: sort
+                sortDirection: sort,
+                page: page,
+                size: size
             }
         });
         return response;
     },
+    getFriendRequestStatusBetweenTwoIdAccount: async (idAccountSent, idAccountReceive) => {
+        const response = await axios.get(`${prefixAPI}/friend-requestes/status/idAccountSent/${idAccountSent}/idAccountReceive/${idAccountReceive}`);
+        return response;
+    }
 }
 export default friendApi;

@@ -21,9 +21,9 @@ const friendService = {
         }
     },
 
-    getFriendshipByIdAccountAndName: async (idAccount, name, page) => {
+    getFriendshipByIdAccountAndName: async (idAccount, name, page, size, sort) => {
         try {
-            const response = await friendApi.getFriendshipByIdAccountAndName(idAccount, name, page);
+            const response = await friendApi.getFriendshipByIdAccountAndName(idAccount, name, page, size, sort);
             return response.data;
         } catch (error) {
             console.error("Error fetching friends:", error);
@@ -31,9 +31,18 @@ const friendService = {
         }
     },
 
-    getFriendRequestesByIdAccountReceiveAndName: async (idAccountReceive, name, sort) => {
+    getFriendRequestesByIdAccountReceiveAndName: async (idAccountReceive, name, sort, page, size=10) => {
         try {
-            const response = await friendApi.getFriendRequestesByIdAccountReceiveAndName(idAccountReceive, name, sort)
+            const response = await friendApi.getFriendRequestesByIdAccountReceiveAndName(idAccountReceive, name, sort, page, size)
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching friends:", error);
+            throw error;
+        }
+    },
+    getFriendRequestStatusBetweenTwoIdAccount: async (idAccountSent, idAccountReceive) => {
+        try {
+            const response = await friendApi.getFriendRequestStatusBetweenTwoIdAccount(idAccountSent, idAccountReceive);
             return response.data;
         } catch (error) {
             console.error("Error fetching friends:", error);
