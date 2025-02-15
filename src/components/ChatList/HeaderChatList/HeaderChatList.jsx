@@ -20,7 +20,9 @@ const HeaderChatList = () => {
     const [showAddFriend, setShowAddFriend] = useState(false);
     const [showCancelRequest, setShowCancelRequest] = useState(false);
     const [showNote, setShowNote] = useState(false);
-    const [showMessage, setShowMessage]= useState("")
+    const [showMessage, setShowMessage] = useState("")
+    const [loadingFetchFriendRequest, setLoadingFetchFriendRequest] = useState(false)
+    const [idFriendRequest, setIdFriendRequest] = useState("");
 
     const showModal = () => {
         setOpen(true);
@@ -37,6 +39,15 @@ const HeaderChatList = () => {
         setNote("")
         setOpen(false);
     };
+    useEffect(() => {
+        let storedUser = localStorage.getItem("infoUser");
+        if (!storedUser) {
+            message.error("Đã xảy ra lỗi, vui lòng thử lại!!!");
+            return;
+        }
+        const parsedUser = JSON.parse(storedUser);
+        setCurrentUser(parsedUser);
+    }, []);
 
     const handleSearch = async () => {
         if (!phone) {
@@ -48,13 +59,13 @@ const HeaderChatList = () => {
         try {
             const response = await userService.getBasicAccountWithRelation(phone, 1);
             setInfoUser(response.data);
-            console.log("THu can xem", response)
+            setNote(response.data.friendshipResponse.note)
             setError("");
             setShowAddFriend(!(response.data?.friendshipResponse?.areFriends || response.data?.friendshipResponse?.yourself));
             setShowMessage((response.data?.friendshipResponse?.areFriends || response.data?.friendshipResponse?.yourself));
-            if(showMessage) {
+            if (showMessage) {
                 setShowNote(false)
-            }else {
+            } else {
                 setShowNote(true)
             }
         } catch (e) {
@@ -69,22 +80,12 @@ const HeaderChatList = () => {
             setLoading(false);
         }
     };
-    console.log("FALSE CHO KET BAN", showAddFriend)
-    useEffect(() => {
-        let storedUser = localStorage.getItem("infoUser");
-        if (!storedUser) {
-            message.error("Đã xảy ra lỗi, vui lòng thử lại!!!");
-            return;
-        }
-        const parsedUser = JSON.parse(storedUser);
-        setCurrentUser(parsedUser);
-    }, []);
-
+   
+    
     useEffect(() => {
         if (!currentUser?.idAccount || !infoUser?.accountBasicResponse?.idAccount) {
             return;
         }
-
         const fetchStatus = async () => {
             try {
                 const responseStatus = await friendService.getFriendRequestStatusBetweenTwoIdAccount(
@@ -92,7 +93,7 @@ const HeaderChatList = () => {
                     infoUser.accountBasicResponse.idAccount
                 );
                 console.log("get status two account: ", responseStatus);
-                if (responseStatus.data == "SENT") {
+                if (responseStatus.data.status == "SENT") {
                     setShowNote(true)
                     setShowCancelRequest(true)
                     setShowAddFriend(false)
@@ -108,7 +109,6 @@ const HeaderChatList = () => {
                 }
             }
         };
-
         fetchStatus();
     }, [infoUser, currentUser]);
 
@@ -120,8 +120,6 @@ const HeaderChatList = () => {
             return;
         }
         JSON.parse
-        console.log("CU us: ", currentUser);
-        console.log("IDUSer: ", currentUser.idAccount);
         const data = {
             "idAccountSent": JSON.parse(currentUser)?.idAccount,
             "idAccountReceive": infoUser.accountBasicResponse?.idAccount,
@@ -130,33 +128,60 @@ const HeaderChatList = () => {
             "lastName": infoUser.accountBasicResponse?.lastName,
             "content": note
         }
-        console.log("Data will sent: ", data)
 
         try {
+            setLoadingFetchFriendRequest(true)
             const response = await friendService.createFriendRequest(data)
             if (response.code === 200) {
+                setLoadingFetchFriendRequest(false)
                 message.success("Gửi lời mời kết bạn thành công!");
                 setShowNote(true)
                 setShowCancelRequest(true)
                 setShowAddFriend(false)
                 setShowMessage(false)
+                setIdFriendRequest(response.data)
             } else {
+                setLoadingFetchFriendRequest(false)
                 setShowNote(true)
                 setShowCancelRequest(false)
                 setShowAddFriend(true)
+                setIdFriendRequest(0)
                 message.error("Gửi lời mời kết bạn không thành công!");
             }
         } catch (error) {
+            setLoadingFetchFriendRequest(false)
             console.error("Lỗi khi gửi lời mời kết bạn", error);
             message.error("Đã xảy ra lỗi, vui lòng thử lại!");
         }
     }
 
     useEffect(() => {
-        if(showMessage) {
+        if (showMessage) {
             setShowNote(false)
         }
     }, [showMessage])
+
+    const handleUpdateCancelFriendRequest = async (idFriendRequest) => {
+        try {
+            const resp = await friendService.updateStatusFriendRequest(idFriendRequest, "CANCELED");
+            console.log(resp);
+
+            if (resp.code === 200) {
+                setShowAddFriend(true)
+                setShowMessage(false)
+                setShowNote(true)
+                setShowCancelRequest(false)
+                message.success("Huỷ lời mời kết bạn thành công");
+            } else {
+                setNote("")
+                message.error("Huỷ lời mời kết bạn thất bại!");
+            }
+        } catch (error) {
+            console.error("Lỗi khi cập nhật trạng thái:", error);
+            message.error("Đã xảy ra lỗi, vui lòng thử lại!");
+        }
+    };
+    console.log("NOte se hien: ", note);
 
     return (
         <div>
@@ -210,14 +235,19 @@ const HeaderChatList = () => {
                                             <ConditionRender isVisible={showMessage}>
                                                 <Button>Nhắn tin</Button>
                                             </ConditionRender>
-                                            <ConditionRender isVisible={showAddFriend}>
-                                                <div onClick={handleCreateFriendRequest}>
-                                                    <Button type="primary">Kết bạn</Button>
-                                                </div>
-                                            </ConditionRender>
+                                            {loadingFetchFriendRequest ? <>
+                                                <LoadingSkeleton width="100%" height="100%" radius="4px" />
+                                            </> : <>
+                                                <ConditionRender isVisible={showAddFriend}>
+                                                    <div onClick={handleCreateFriendRequest}>
+                                                        <Button type="primary">Kết bạn</Button>
+                                                    </div>
+                                                </ConditionRender>
+                                            </>}
+
                                             <ConditionRender isVisible={showCancelRequest}>
-                                                <div>
-                                                    <Button type="dashed">Huỷ lời mời</Button>
+                                                <div onClick={() => handleUpdateCancelFriendRequest(idFriendRequest)}>
+                                                    <Button type="dashed">Huỷ lời mời + {idFriendRequest}</Button>
                                                 </div>
                                             </ConditionRender>
                                         </div>

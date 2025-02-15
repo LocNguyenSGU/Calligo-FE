@@ -1,9 +1,10 @@
 import { SearchOutlined } from "@ant-design/icons";
-import { Input, Select } from "antd";
+import { Button, Input, message, Select } from "antd";
 import friendService from "../../../services/friendService";
 import { useEffect, useState } from "react";
 import LoadingSkeleton from "../../shared/LoadingSkeleton";
 import useDebounce from "../../../hooks/useDebounce";
+import { use } from "react";
 
 const WindowFriendList = () => {
     const [friends, setFriends] = useState([]); // Lưu danh sách bạn bè
@@ -14,6 +15,7 @@ const WindowFriendList = () => {
     const nameDebounce = useDebounce(name, 500);
     const [sort, setSort] = useState("Increase");
     const [page, setPage] = useState(0)
+    const [countTotalFriend, setCountTotalFriend] = useState(0)
 
     useEffect(() => {
         const fetchFriends = async () => {
@@ -22,7 +24,7 @@ const WindowFriendList = () => {
                 const response = await friendService.getFriendshipByIdAccountAndName(1, nameDebounce, page, 40);
 
                 if (!response || !response.data?.content) {
-                    setFriends([]); 
+                    setFriends([]);
                     setGrouped({});
                     return;
                 }
@@ -44,6 +46,7 @@ const WindowFriendList = () => {
 
                 setGrouped(grouped);
                 setFriends(sortedFriends);
+                setCountTotalFriend(sortedFriends.length)
             } catch (error) {
                 console.error("Error fetching friends:", error);
                 setError("Không thể tải danh sách bạn bè");
@@ -53,7 +56,25 @@ const WindowFriendList = () => {
         };
 
         fetchFriends();
-    }, [nameDebounce, page, sort ]); // Gọi lại khi `nameDebounce` hoặc `sort` thay đổi
+    }, [nameDebounce, page, sort, countTotalFriend]); // Gọi lại khi `nameDebounce` hoặc `sort` thay đổi
+
+    const handleDeleteFriend = async (idFriend) => {
+        try {
+            const response = await friendService.deleteFriend(idFriend);
+            if (response?.code === 200) {
+                message.success("Xoá bạn bè thành công");
+                // Cập nhật danh sách bạn bè nếu có
+                setFriends(prevFriends => prevFriends.filter(friend => friend.id !== idFriend));
+                setCountTotalFriend(countTotalFriend - 1)
+            } else {
+                message.error("Xoá bạn bè thất bại");
+            }
+        } catch (error) {
+            message.error("Đã xảy ra lỗi, vui lòng thử lại!");
+            console.error("Lỗi khi xoá bạn:", error);
+        }
+    };
+    
 
     return (
         <div className='bg-gray-200'>
@@ -125,11 +146,16 @@ const WindowFriendList = () => {
                                     <h2 className="font-semibold text-base pl-3">{letter}</h2>
                                     {grouped[letter].map(friend => (
                                         <>
-                                            <div key={friend.id} className="item flex gap-3 items-center py-3 hover:bg-gray-100 pl-3 cursor-pointer">
-                                                <div className="w-[50px] h-[50px] rounded-full border border-gray-400">
-                                                    <img src="/public/sidebar/boy.png" alt="" className="w-12 h-12 rounded-full" />
+                                            <div key={friend.idFriend} className="item flex justify-between items-center py-3 hover:bg-gray-100 pl-3 cursor-pointer pr-10">
+                                                <div className="flex gap-3 items-center">
+                                                    <div className="w-[50px] h-[50px] rounded-full border border-gray-400">
+                                                        <img src="/public/sidebar/boy.png" alt="" className="w-12 h-12 rounded-full" />
+                                                    </div>
+                                                    <span className="font-semibold text-base">{friend.firstName} {friend.lastName}</span>
                                                 </div>
-                                                <span className="font-semibold text-base">{friend.firstName} {friend.lastName}</span>
+                                                <div>
+                                                    <Button type="text" onClick={() => handleDeleteFriend(friend.idFriend)}>Xoá bạn</Button>
+                                                </div>
                                             </div>
                                             <div className="h-[1px] bg-gray-300 w-[90%] my-0 mx-auto"></div>
                                         </>

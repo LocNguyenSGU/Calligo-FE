@@ -30,6 +30,10 @@ const friendApi = {
     getFriendRequestStatusBetweenTwoIdAccount: async (idAccountSent, idAccountReceive) => {
         const response = await axios.get(`${prefixAPI}/friend-requestes/status/idAccountSent/${idAccountSent}/idAccountReceive/${idAccountReceive}`);
         return response;
+    },
+    deleteFriend: async (idFriend) => {
+        const response = await axios.delete(`${prefixAPI}/friends/${idFriend}`)
+        return response;
     }
 }
 export default friendApi;

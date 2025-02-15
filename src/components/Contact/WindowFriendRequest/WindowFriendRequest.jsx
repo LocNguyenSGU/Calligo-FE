@@ -141,7 +141,7 @@ const WindowFriendRequest = () => {
                                         <div className="w-[50px] h-[50px] rounded-full border border-gray-400">
                                             <img src="/sidebar/boy.png" alt="" className="w-12 h-12 rounded-full" />
                                         </div>
-                                        <span className="font-semibold text-base">{e.firstName} {e.lastName}</span>
+                                        <p className="font-semibold text-base">{e.firstName} {e.lastName} <span className="font-normal text-sm"> {e.content != "" ?( "( " + e.content + " )") : ""}</span></p>
                                     </div>
                                     <div className="flex gap-3 mt-3 pr-16">
                                         <Button onClick={() => handleUpdateStatusFriendRequest(e.idFriendRequest, { status: "REJECTED" })}>

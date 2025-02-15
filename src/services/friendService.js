@@ -48,6 +48,15 @@ const friendService = {
             console.error("Error fetching friends:", error);
             throw error;
         }
+    },
+    deleteFriend: async(idFriend) => {
+        try {
+            const response = await friendApi.deleteFriend(idFriend);
+            return response.data;
+        } catch (error) {
+            console.error("Error delete friend:", error);
+            throw error;
+        }
     }
 };
 

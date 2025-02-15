@@ -693,20 +693,16 @@ video {
   height: 73px;
 }
 
+.h-\[75\%\] {
+  height: 75%;
+}
+
 .h-\[calc\(100\%-68px\)\] {
   height: calc(100% - 68px);
 }
 
-.h-full {
-  height: 100%;
-}
-
 .h-screen {
   height: 100vh;
-}
-
-.h-\[75\%\] {
-  height: 75%;
 }
 
 .w-12 {
@@ -983,10 +979,6 @@ video {
   padding-bottom: 0.75rem;
 }
 
-.pb-24 {
-  padding-bottom: 6rem;
-}
-
 .pb-3 {
   padding-bottom: 0.75rem;
 }
@@ -999,6 +991,10 @@ video {
   padding-left: 0.75rem;
 }
 
+.pr-10 {
+  padding-right: 2.5rem;
+}
+
 .pr-16 {
   padding-right: 4rem;
 }
@@ -1009,10 +1005,6 @@ video {
 
 .pt-5 {
   padding-top: 1.25rem;
-}
-
-.pb-28 {
-  padding-bottom: 7rem;
 }
 
 .text-center {
@@ -1081,6 +1073,10 @@ video {
 .text-white {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+
+.filter {
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 
 .skeleton {
