@@ -20,12 +20,12 @@ const WindowFriendRequest = () => {
                 setLoading(true);
                 const response = await friendService.getFriendRequestesByIdAccountReceiveAndName(3, nameDebounce, sortDebounce);
 
-                if (!response || !response.data?.content) {
+                if (!response || !response.data?.data) {
                     setFriendRequest([]);
                     setTotalFriendRequestes(0)
                     return;
                 }
-                setTotalFriendRequestes(response.data.totalElements)
+                setTotalFriendRequestes(response.data?.totalElements)
                 setFriendRequest(response);
             } catch (error) {
                 console.error("Error fetching friends:", error);
@@ -133,7 +133,7 @@ const WindowFriendRequest = () => {
                     </div>
                 </>) : (
                     <div className="body-list mt-2 overflow-auto h-[75%]">
-                        {friendRequest?.data?.content.map((e) => (
+                        {friendRequest?.data?.data.map((e) => (
                         <>
                             <div key={e.idFriendRequest} style={{ display: handledRequests.includes(e.idFriendRequest) ? 'none' : 'block' }}>
                                 <div className="item flex justify-between items-center py-3 hover:bg-gray-100 pl-3 cursor-pointer">

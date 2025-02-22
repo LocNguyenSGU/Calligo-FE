@@ -4,7 +4,6 @@ import friendService from "../../../services/friendService";
 import { useEffect, useState } from "react";
 import LoadingSkeleton from "../../shared/LoadingSkeleton";
 import useDebounce from "../../../hooks/useDebounce";
-import { use } from "react";
 
 const WindowFriendList = () => {
     const [friends, setFriends] = useState([]); // Lưu danh sách bạn bè
@@ -23,14 +22,16 @@ const WindowFriendList = () => {
                 setLoading(true);
                 const response = await friendService.getFriendshipByIdAccountAndName(1, nameDebounce, page, 40);
 
-                if (!response || !response.data?.content) {
+                console.log("RESPONSE FIRNE LIS", response)
+                if (!response || !response.data?.data) {
                     setFriends([]);
                     setGrouped({});
                     return;
                 }
 
                 // Sắp xếp danh sách theo thứ tự lastName
-                let sortedFriends = response.data.content.sort((a, b) =>
+                console.log("ARRAY MUST", response.data.data)
+                let sortedFriends = response.data.data.sort((a, b) =>
                     sort === "Increase"
                         ? a.lastName.localeCompare(b.lastName)
                         : b.lastName.localeCompare(a.lastName)
