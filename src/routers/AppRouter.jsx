@@ -17,9 +17,9 @@ const AppRouter = () => {
                 <Route 
                     path="/home" 
                     element={
-                        <ProtectedRoute> 
+                        // <ProtectedRoute> 
                             <HomeScreen /> 
-                        </ProtectedRoute>
+                        // </ProtectedRoute>
                     }
                 >
                     {/* Mặc định vào PageChat */}

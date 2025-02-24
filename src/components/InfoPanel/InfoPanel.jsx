@@ -1,3 +1,4 @@
+import TextArea from "antd/es/input/TextArea";
 import Avatar from "../shared/Avatar";
 import IconChatList from "../shared/IconChatList";
 
@@ -36,6 +37,9 @@ const InfoPanel = ({ isGroup = false }) => {
                         </div>
                     </>}
                 </div>
+            </div>
+            <div className="w-full h-full bg-cyan-300">
+                Chưa làm
             </div>
         </div>
     );

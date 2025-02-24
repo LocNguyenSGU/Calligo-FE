@@ -14,3 +14,25 @@
         background-position-x: -200%;   
     }
 }
+
+
+/* CSS NHƯNG NÓ KHÔNG ĂN */
+/* Custom Scrollbar */
+.content-message::-webkit-scrollbar { 
+    width: 3px; /* Độ rộng nhỏ hơn */
+}
+
+.content-message::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1); /* Màu nhạt hơn */
+    border-radius: 6px;
+}
+
+.content-message::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.02); /* Màu nền nhẹ */
+}
+/* CSS NHƯNG NÓ KHÔNG ĂN */
+
+
+.box-shadow-message {
+    box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+}
