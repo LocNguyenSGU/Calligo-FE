@@ -6,5 +6,10 @@ const chatApi = {
         const response = axios.get(`${prefixAPI}/conversation`)
         return response
     },
+
+    getMessages: async (idConversation) => {
+        const response = axios.get(`${prefixAPI}/messages/${idConversation}`) 
+        return response
+    },
 }
 export default chatApi;

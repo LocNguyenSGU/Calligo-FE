@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Seperate from '../shared/Seperate';
 import InfoQuickChat from './InfoQuickChat/InfoQuickChat';
 import chatService from '../../services/chatService';
+import { useParams } from 'react-router-dom';
 
 const ChatList = ({ onSelectConversation }) => {
   const [conversations, setConversations] = useState([]);

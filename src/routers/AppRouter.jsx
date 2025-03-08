@@ -8,9 +8,13 @@ import PageContact from '../components/Pages/PageContact';
 import WindowFriendRequest from '../components/Contact/WindowFriendRequest/WindowFriendRequest';
 import WindowGroupList from '../components/Contact/WindowGroupList/WindowGroupList';
 import WindowFriendList from '../components/Contact/WindowFriendList/WindowFriendList';
+import WindowChat from '../components/WindowChat/WindowChat';
+import { StrictMode } from 'react';
+import ChatList from '../components/ChatList/ChatList';
 
 const AppRouter = () => {
     return (
+        
         <BrowserRouter>
             <Routes>
                 {/* Protected Route để đảm bảo user đã đăng nhập */}
@@ -24,7 +28,13 @@ const AppRouter = () => {
                 >
                     {/* Mặc định vào PageChat */}
                     <Route index element={<PageChat />} />
-                    <Route path="chats" element={<PageChat />} />
+                    <Route path="chats" element={<ChatList />} />
+
+                    
+                    {/* Group các route liên quan đến Chats */}
+                    <Route path="chats" element={<PageChat />}>
+                        <Route path="chats/idConversation" element={<WindowChat />} />
+                    </Route>
 
                     {/* Group các route liên quan đến Contacts */}
                     <Route path="contacts" element={<PageContact />}>
