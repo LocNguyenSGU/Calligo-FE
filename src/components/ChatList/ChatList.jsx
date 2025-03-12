@@ -41,6 +41,7 @@ const ChatList = ({ onSelectConversation }) => {
         dateCreate: conv.dateCreate || "Unknown",  // Ngày tạo
         idLastMessage: conv.idLastMessage || "No messages", // Tin nhắn cuối
         numberMember: conv.numberMember || 0,   // Số thành viên
+        myAccountId:2,
 
     });
   };

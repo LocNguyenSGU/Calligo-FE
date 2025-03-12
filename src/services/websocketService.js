@@ -17,7 +17,7 @@ class WebsocketService {
 
       this.client.onConnect = () => {
         this.connected = true;
-        console.log('Connected to WebSocket');
+        console.log('Connected to WebSocket in webdockService');
         if (callback) callback(this.client);
       };
 
@@ -30,9 +30,12 @@ class WebsocketService {
     }
   }
 
-  subscribe(topic, callback) {
+  subscribe(destination, callback) {
     if (this.client && this.connected) {
-      return this.client.subscribe(topic, (message) => {
+      console.log('Subscribed to', destination);
+      return this.client.subscribe(destination, (message) => {
+        console.log('Received message:', message.body
+        );
         callback(message.body);
       });
     } else {
@@ -42,6 +45,7 @@ class WebsocketService {
 
   send(destination, message) {
     if (this.client && this.connected) {
+      console.log('Sending message:', message, 'to', destination);
       this.client.publish({ destination, body: message });
     } else {
       console.warn('Cannot send message: WebSocket not connected');
