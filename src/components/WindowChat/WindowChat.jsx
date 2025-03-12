@@ -8,36 +8,51 @@ import Seperate from '../shared/Seperate';
 import websocketService from '../../services/websocketService';
 import chatService from '../../services/chatService';
 
-const WindowChat = ({ src, title, isGroup, lastTime, idConversation }) => {
+const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId }) => {
   const [messages, setMessages] = useState([]); // Danh sách tin nhắn động
   const [input, setInput] = useState(''); // Nội dung tin nhắn người dùng nhập
-  console.log('idConversation:', idConversation);
-  const myAccountId = 2; 
+  console.log('idConversation in windowChat:', idConversation);
+  console.log('myAccountId in windowChat:', myAccountId);
+
+  const fetchMessages = async () => {
+    try {
+      const response = await chatService.getMessages(idConversation);
+      console.log("API Response Messages:", response); // Kiểm tra dữ liệu trả về
+      setMessages(response);
+      
+      if (!Array.isArray(response)) {
+        throw new Error("API không trả về danh sách tin nhan!");
+      }
+
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách tin nhan:", error);
+    } 
+  };
 
   useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const response = await chatService.getMessages(idConversation);
-        console.log("API Response Messages:", response); // Kiểm tra dữ liệu trả về
-        setMessages(response);
-        
-        if (!Array.isArray(response)) {
-          throw new Error("API không trả về danh sách tin nhan!");
-        }
-  
-      } catch (error) {
-        console.error("Lỗi khi lấy danh sách tin nhan:", error);
-      } 
-    };
+    
   
     fetchMessages();
     // Kết nối WebSocket và subscribe vào conversation
-    websocketService.connect(() => {
-      websocketService.subscribe(`/topic/conversation/${idConversation}`, (message) => {
+    if(websocketService.connected){
+      websocketService.subscribe(`/app/topic/conversation/${idConversation}`, (message) => {
         const receivedMessage = JSON.parse(message); // Backend gửi JSON
+        console.log('Received message in windownchat:', receivedMessage);
         setMessages((prev) => [...prev, receivedMessage]);
+        console.log('Messages:', messages);
       });
-    });
+    } else {
+      websocketService.connect(() => {
+        console.log('Connected to WebSocket in windownchat');
+        websocketService.subscribe(`/topic/conversation/${idConversation}`, (message) => {
+          const receivedMessage = JSON.parse(message); // Backend gửi JSON
+          console.log('Received message in windownchat:', receivedMessage);
+          setMessages((prev) => [...prev, receivedMessage]);
+          console.log('Messages:', messages);
+        });
+      });
+    }
+    
 
     // Cleanup khi component unmount (tùy chọn, nếu cần ngắt kết nối riêng cho conversation)
     return () => {
@@ -46,16 +61,26 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation }) => {
     };
   }, [idConversation]);
 
+  // const handleMessageChange = (e) => {
+  //   setMessages(e.target.value);
+  // };
+
   const sendMessage = () => {
     if (input) {
       const message = {
+        idConversation: idConversation,
+        idAccountSent: 3,
+
         content: input,
         sender: "Me", // Thay bằng ID hoặc tên người dùng thực tế từ auth
         timestamp: new Date().toISOString(), // Thêm timestamp nếu backend yêu cầu
+        
+    
+     
       };
       websocketService.send(`/app/send/${idConversation}`, JSON.stringify(message));
       setInput('');
-      console.log('idConversation:', idConversation);
+      fetchMessages();
     }
   };
 
@@ -88,19 +113,19 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation }) => {
       <div className="body-window-chat bg-gray-200 max-h-[calc(100vh-165px)] overflow-auto scrollbar-thin scrollbar-thumb-gray-400">
         <div className="pl-3 content-message overflow-auto h-[calc(100vh-170px)] bg-gray-200 scrollbar-thin scrollbar-thumb-gray-400">
           {messages.map((msg, index) => (
-            <div key={index} className={`flex mb-2 ${msg.idAccountSent === myAccountId ? "justify-end" : "justify-start"}`}>
-              <div className={`flex items-start gap-2 ${msg.idAccountSent === myAccountId  ? "flex-row-reverse" : "flex-row"}`}>
-                {msg.idAccountSent === myAccountId  && (
+            <div key={index} className={`flex mb-2 ${msg.idAccountSent == myAccountId ? "justify-end" : "justify-start"}`}>
+              <div className={`flex items-start gap-2 ${msg.idAccountSent == myAccountId  ? "flex-row-reverse" : "flex-row"}`}>
+                {msg.idAccountSent == myAccountId  && (
                   <div className="w-9 h-9 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">
-                    {msg.sender[0]}
+                    {msg.name}
                   </div>
                 )}
                 <div
                   className={`block-message-recived mr-5 px-4 py-3 rounded-md max-w-[75%] text-gray-600 box-shadow-message ${
-                    msg.idAccountSent === myAccountId  ? 'bg-blue-100' : 'bg-white'
+                    msg.idAccountSent == myAccountId  ? 'bg-blue-100' : 'bg-white'
                   }`}
                 >
-                  {msg.idAccountSent === myAccountId  && (
+                  {msg.idAccountSent == myAccountId  && (
                     <span className="name-person-sent text-gray-700 font-light text-sm inline-block mb-1">
                       {msg.idAccountSent}
                     </span>
@@ -135,8 +160,12 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation }) => {
             />
           </div>
           <div className="input-quick-emoji w-[10%] flex items-center justify-center gap-2">
+            <div>
             <IconChatList size="23px" src="/public/windowchat/happy.png" />
-            <IconChatList size="25px" src="/public/windowchat/paper-plane.png" onClick={sendMessage} />
+            </div>
+            <div onClick={sendMessage}>
+            <IconChatList size="25px" src="/public/windowchat/paper-plane.png"  />
+            </div>
           </div>
         </div>
       </div>

@@ -9,6 +9,7 @@ const SignInForm = () => {
         try {
             const data = await authService.login(values);
             console.log('Data ~ login ~ handleSignin: ', data);
+            const infoUser = await authService.verify();
             navigate('/home');
         } catch (error) {
             console.log(error);

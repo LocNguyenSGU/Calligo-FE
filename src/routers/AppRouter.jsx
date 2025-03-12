@@ -28,7 +28,6 @@ const AppRouter = () => {
                 >
                     {/* Mặc định vào PageChat */}
                     <Route index element={<PageChat />} />
-                    <Route path="chats" element={<ChatList />} />
 
                     
                     {/* Group các route liên quan đến Chats */}
