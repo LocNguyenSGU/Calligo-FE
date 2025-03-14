@@ -2,18 +2,56 @@ import React, { useState, useEffect } from 'react';
 import Seperate from '../shared/Seperate';
 import InfoQuickChat from './InfoQuickChat/InfoQuickChat';
 import chatService from '../../services/chatService';
+import websocketService from '../../services/websocketService';
 import { useParams } from 'react-router-dom';
 
 const ChatList = ({ onSelectConversation }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filteredNames, setFilteredNames] = useState([]);
 
   useEffect(() => {
   const fetchConversations = async () => {
     try {
       const response = await chatService.getConversation();
-      console.log("API Response:", response); // Kiểm tra dữ liệu trả về
+      console.log("API Response:", response.data); // Kiểm tra dữ liệu trả về
       const data = response.data;
+
+      /////////////////////////////////
+      // Get username
+      const username = await chatService.nameConversation();
+      console.log("Name storage:", username);
+      /////////////////////////////////
+      
+      // loc name conversation
+      const namesList = data.map(chat => {
+
+        const users = chat.name.split(","); // Tách chuỗi name thành mảng
+        if(chat.type === "GROUP") {
+          return {
+            idConversation: chat.idConversation,
+            name: chat.name,
+            type: chat.type,
+            avatar: chat.avatar,
+            numberMember: chat.numberMember,
+            dateCreate: chat.dateCreate,
+            idLastMessage: chat.idLastMessage
+          };
+        }
+        const otherUsers = users.filter(user => user !== username);
+        return {
+          idConversation: chat.idConversation,
+          name: otherUsers.join(", "), // Ghép lại thành chuỗi nếu còn nhiều tên
+          type: chat.type,
+          avatar: chat.avatar,
+          numberMember: chat.numberMember,
+          dateCreate: chat.dateCreate,
+          idLastMessage: chat.idLast
+        };
+      });
+  
+      setFilteredNames(namesList);
+      //////////////////////////////////////
       
       if (!Array.isArray(data)) {
         throw new Error("API không trả về danh sách cuộc trò chuyện!");
@@ -32,6 +70,9 @@ const ChatList = ({ onSelectConversation }) => {
 
   // Hàm xử lý khi click vào conversation
   const handleConversationClick = (conv) => {
+    if (websocketService.connected) {
+      websocketService.send(`/app/topic/conversation/${conv.idConversation}`, {});
+    }
     onSelectConversation({
 
         idConversation: conv.idConversation,  // ID cuộc trò chuyện
@@ -55,7 +96,7 @@ const ChatList = ({ onSelectConversation }) => {
       {/* <HeaderChatList></HeaderChatList> */}
       <Seperate />
       <div className="body-chatlist overflow-auto h-[calc(100%-68px)]">
-        {conversations.map((conv) => (
+        {filteredNames.map((conv) => (
           <div
             key={conv.idConversation}
             onClick={() => handleConversationClick(conv)}

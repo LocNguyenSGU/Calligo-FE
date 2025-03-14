@@ -1,4 +1,5 @@
 import { Client } from '@stomp/stompjs';
+import { message } from 'antd';
 import SockJS from 'sockjs-client';
 
 class WebsocketService {
@@ -30,10 +31,10 @@ class WebsocketService {
     }
   }
 
-  subscribe(destination, callback) {
+  subscribe(topic, callback) {
     if (this.client && this.connected) {
-      console.log('Subscribed to', destination);
-      return this.client.subscribe(destination, (message) => {
+      console.log('Subscribed to', topic);
+      return this.client.subscribe(topic, (message) => {
         console.log('Received message:', message.body
         );
         callback(message.body);

@@ -35,7 +35,7 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId
     fetchMessages();
     // Kết nối WebSocket và subscribe vào conversation
     if(websocketService.connected){
-      websocketService.subscribe(`/app/topic/conversation/${idConversation}`, (message) => {
+      websocketService.subscribe(`/topic/conversation/${idConversation}`, (message) => {
         const receivedMessage = JSON.parse(message); // Backend gửi JSON
         console.log('Received message in windownchat:', receivedMessage);
         setMessages((prev) => [...prev, receivedMessage]);
@@ -80,7 +80,7 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId
       };
       websocketService.send(`/app/send/${idConversation}`, JSON.stringify(message));
       setInput('');
-      fetchMessages();
+      
     }
   };
 
