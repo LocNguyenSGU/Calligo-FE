@@ -10,5 +10,11 @@ const chatService = {
         const response = await chatApi.getMessages(idConversation)
         return response.data;
     },
+
+    nameConversation: async () => {
+        const nameStorage = localStorage.getItem("infoUser");
+      const name = JSON.parse(nameStorage);
+      return name.firstName.trim();
+    },
 }
 export default chatService;

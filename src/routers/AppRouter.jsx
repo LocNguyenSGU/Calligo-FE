@@ -16,16 +16,18 @@ const AppRouter = () => {
     return (
         
         <BrowserRouter>
+            <StrictMode>
+
             <Routes>
                 {/* Protected Route để đảm bảo user đã đăng nhập */}
                 <Route 
                     path="/home" 
                     element={
                         // <ProtectedRoute> 
-                            <HomeScreen /> 
+                        <HomeScreen /> 
                         // </ProtectedRoute>
                     }
-                >
+                    >
                     {/* Mặc định vào PageChat */}
                     <Route index element={<PageChat />} />
 
@@ -50,6 +52,7 @@ const AppRouter = () => {
                 <Route path="/signup" element={<SignUpScreen />} />
                 {/* <Route path="*" element={<div>404 - Page Not Found</div>} /> */}
             </Routes>
+                </StrictMode>
         </BrowserRouter>
     );
 };
