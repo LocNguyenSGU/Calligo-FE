@@ -6,10 +6,14 @@ import { useState } from "react";
 
 const PageChat = () => {
   const [selectConversation , setSelectConversation] = useState(null);
+  const infoUser = JSON.parse(localStorage.getItem("infoUser"));
+  console.log("Loc- infoUser: ", infoUser);
 
   const handleSelectConversation = (conversation) => {
     setSelectConversation(conversation);
   };
+
+  console.log("Loc- selectConversation: ", selectConversation);
 
 
     return (
@@ -17,13 +21,14 @@ const PageChat = () => {
             <div className='flex flex-col w-[23%] ml-16 fixed top-0'>
                 <HeaderChatList></HeaderChatList>
                 <ChatList onSelectConversation={handleSelectConversation}></ChatList>
-                {/* <FriendList></FriendList> */}
             </div>
-            <div className='w-[73%] bg-blue-200 flex fixed ml-[395px]'>
+            <div className='w-[73%] bg-blue-200 flex fixed ml-[395px] h-screen'>
               {selectConversation && 
-                <WindowChat {...selectConversation}/>
+              <>
+                 <WindowChat src={selectConversation?.avartar} idConversation={selectConversation?.idConversation} title={selectConversation?.title} isGroup={selectConversation?.isGroup} myAccountId={infoUser.idAccount} />
+                 <InfoPanel isGroup={selectConversation?.isGroup}/>
+              </>
               }
-                <InfoPanel isGroup={selectConversation?.isGroup}/>
 
             </div>
         </>

@@ -74,7 +74,6 @@ const ChatList = ({ onSelectConversation }) => {
       websocketService.send(`/app/topic/conversation/${conv.idConversation}`, {});
     }
     onSelectConversation({
-
         idConversation: conv.idConversation,  // ID cuộc trò chuyện
         title: conv.name || "Unnamed",        // Tên cuộc trò chuyện
         isGroup: conv.type === "GROUP",       // Kiểm tra nhóm chat
