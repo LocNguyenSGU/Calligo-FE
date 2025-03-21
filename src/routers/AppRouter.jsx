@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import HomeScreen from '../pages/logged_in/user/HomeScreen';
 import LoginScreen from '../pages/LoginScreen';
 import SignUpScreen from '../pages/SignUpScreen';
-import ProtectedRoute from './ProtectedRoute';
 import PageChat from '../components/Pages/PageChat';
 import PageContact from '../components/Pages/PageContact';
 import WindowFriendRequest from '../components/Contact/WindowFriendRequest/WindowFriendRequest';
@@ -10,20 +9,20 @@ import WindowGroupList from '../components/Contact/WindowGroupList/WindowGroupLi
 import WindowFriendList from '../components/Contact/WindowFriendList/WindowFriendList';
 import WindowChat from '../components/WindowChat/WindowChat';
 import { StrictMode } from 'react';
-import ChatList from '../components/ChatList/ChatList';
 
 const AppRouter = () => {
     return (
-        
+
         <BrowserRouter>
-            <StrictMode>
+            
 
             <Routes>
                 {/* Protected Route để đảm bảo user đã đăng nhập */}
-                <Route 
-                    path="/home" 
+                <Route
+                    path="/home"
                     element={
                         // <ProtectedRoute> 
+
                         <HomeScreen /> 
                         // </ProtectedRoute>
                     }
@@ -31,10 +30,10 @@ const AppRouter = () => {
                     {/* Mặc định vào PageChat */}
                     <Route index element={<PageChat />} />
 
-                    
+
                     {/* Group các route liên quan đến Chats */}
                     <Route path="chats" element={<PageChat />}>
-                        <Route path="chats/idConversation" element={<WindowChat />} />
+                        <Route path="chats/:idConversation" element={<WindowChat />} />
                     </Route>
 
                     {/* Group các route liên quan đến Contacts */}
@@ -52,7 +51,7 @@ const AppRouter = () => {
                 <Route path="/signup" element={<SignUpScreen />} />
                 {/* <Route path="*" element={<div>404 - Page Not Found</div>} /> */}
             </Routes>
-                </StrictMode>
+                
         </BrowserRouter>
     );
 };

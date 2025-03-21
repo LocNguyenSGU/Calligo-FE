@@ -13,9 +13,15 @@ const ChatList = ({ onSelectConversation }) => {
   useEffect(() => {
   const fetchConversations = async () => {
     try {
-      const response = await chatService.getConversation();
+      const response = await chatService.getConversationWithIdAccount();
       console.log("API Response:", response.data); // Kiểm tra dữ liệu trả về
       const data = response.data;
+
+      for (let i = 0; i < data.length; i++) {
+        const idConversation = data[i].idConversation;
+        websocketService.send(`/app/topic/conversation/${idConversation}`,{}); 
+        console.log("Trung- idConversation: ", idConversation);
+      }
 
       /////////////////////////////////
       // Get username
@@ -70,9 +76,6 @@ const ChatList = ({ onSelectConversation }) => {
 
   // Hàm xử lý khi click vào conversation
   const handleConversationClick = (conv) => {
-    if (websocketService.connected) {
-      websocketService.send(`/app/topic/conversation/${conv.idConversation}`, {});
-    }
     onSelectConversation({
 
         idConversation: conv.idConversation,  // ID cuộc trò chuyện
@@ -86,10 +89,6 @@ const ChatList = ({ onSelectConversation }) => {
 
     });
   };
-
-  if (loading) {
-    return <div className="h-screen bg-white flex items-center justify-center">Đang tải...</div>;
-  }
 
   return (
     <div className="h-screen bg-white">
@@ -112,7 +111,7 @@ const ChatList = ({ onSelectConversation }) => {
               isGroup={conv.type === 'GROUP'}
             />
           </div>
-        ))}
+        ))};
       </div>
     </div>
   );

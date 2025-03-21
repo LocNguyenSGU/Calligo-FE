@@ -1,8 +1,8 @@
 import chatApi from "../api/chatApi";
 
 const chatService = {
-    getConversation: async () => {
-        const response = await chatApi.getConversation()
+    getConversationWithIdAccount: async () => {
+        const response = await chatApi.getConversationWithIdAccount()
         return response.data;
     },
 
@@ -16,5 +16,7 @@ const chatService = {
       const name = JSON.parse(nameStorage);
       return name.firstName.trim();
     },
+
+    
 }
 export default chatService;
