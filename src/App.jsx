@@ -8,10 +8,7 @@ const App = () => {
     // Khởi tạo kết nối WebSocket khi ứng dụng bắt đầu
     websocketService.connect(() => {
       console.log('LOC- WebSocket connected successfully');
-      // Nếu cần subscribe kênh mặc định ngay từ đầu, có thể thêm ở đây
-      // Ví dụ: websocketService.subscribe('/topic/messages', (message) => { ... });
     });
-
     // Ngắt kết nối khi component App unmount
     return () => {
       console.log('LOC-WebSocket disconnected');

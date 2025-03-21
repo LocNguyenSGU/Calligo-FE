@@ -1,83 +1,139 @@
 import { Client } from '@stomp/stompjs';
-import { message } from 'antd';
 import SockJS from 'sockjs-client';
 
 class WebsocketService {
   constructor() {
     this.client = null;
     this.connected = false;
-    this.subscriptions = {}; // Lưu các subscription
-    this.destination = {};
+    this.subscriptions = {};         // topic -> stomp subscription
+    this.callbacks = {};             // topic -> array of callbacks
+    this.pendingSubscriptions = [];  // Queue các sub đợi kết nối xong
   }
 
   connect(callback) {
     if (!this.client) {
-      const socket = new SockJS('http://localhost:8081/ws-chat'); // URL backend
+      const socket = new SockJS('http://localhost:8081/ws-chat');
       this.client = new Client({
         webSocketFactory: () => socket,
-        reconnectDelay: 5000, // reconnect sau 5s nếu disconnect
+        reconnectDelay: 5000,
       });
 
       this.client.onConnect = () => {
         this.connected = true;
-        console.log('Connected to WebSocket');
+        console.log('✅ Connected to WebSocket');
+
+        // Xử lý các subscription đợi kết nối
+        this.pendingSubscriptions.forEach(({ topic, callback }) => {
+          this._doSubscribe(topic, callback);
+        });
+        this.pendingSubscriptions = [];
+
         if (callback) callback(this.client);
       };
 
       this.client.onStompError = (error) => {
         this.connected = false;
-        console.error('STOMP error:', error);
+        console.error('❌ STOMP error:', error);
       };
 
       this.client.activate();
     }
   }
 
+  /**
+   * Đăng ký một callback cho topic. Nếu chưa kết nối → đợi.
+   */
   subscribe(topic, callback) {
-    if (this.client && this.connected) {
-      console.log('Subscribed to', topic);
-      return this.client.subscribe(topic, (message) => {
-        callback(message.body);
+    if (this.connected) {
+      this._doSubscribe(topic, callback);
+    } else {
+      console.warn(`⏳ WebSocket not connected → Queue subscription for ${topic}`);
+      this.pendingSubscriptions.push({ topic, callback });
+    }
+  }
+
+  _doSubscribe(topic, callback) {
+    if (!this.callbacks[topic]) {
+      this.callbacks[topic] = [];
+    }
+  
+    const alreadyExists = this.callbacks[topic].includes(callback);
+    console.log(`👉 Subscribing callback to ${topic}, already exists: ${alreadyExists}`, callback);
+  
+    if (!alreadyExists) {
+      this.callbacks[topic].push(callback);
+    } else {
+      console.log(`⚠️ Callback already exists for ${topic}, skipping push`);
+    }
+  
+    // Nếu chưa sub vào topic này lần nào thì sub thật sự
+    if (!this.subscriptions[topic]) {
+      console.log('📡 Subscribing WebSocket to', topic);
+      const subscription = this.client.subscribe(topic, (message) => {
+        const parsedMessage = JSON.parse(message.body);
+        console.log(`📨 Received message on ${topic}:`, parsedMessage);
+        console.log('🧩 Executing callbacks for topic:', this.callbacks[topic]);
+  
+        this.callbacks[topic].forEach(cb => cb(parsedMessage));
       });
+      this.subscriptions[topic] = subscription;
     } else {
-      console.warn('WebSocket not connected yet');
+      console.log(`🔄 Already subscribed WebSocket to ${topic}`);
     }
   }
 
-  unsubscribe(topic) {
-    const subscription = this.subscriptions[topic];
-    if (subscription) {
-      subscription.unsubscribe();
-      delete this.subscriptions[topic];
-      console.log('Unsubscribed from', topic);
+  /**
+   * Gỡ một callback khỏi topic. Không còn callback → unsubscribe WebSocket.
+   */
+  unsubscribe(topic, callback) {
+    if (this.callbacks[topic]) {
+      this.callbacks[topic] = this.callbacks[topic].filter(cb => cb !== callback);
+      console.log(`🗑️ Removed one callback from ${topic}`);
+
+      if (this.callbacks[topic].length === 0) {
+        const subscription = this.subscriptions[topic];
+        if (subscription) {
+          subscription.unsubscribe();
+          console.log(`🔌 Unsubscribed WebSocket from ${topic}`);
+          delete this.subscriptions[topic];
+        }
+        delete this.callbacks[topic];
+      }
     } else {
-      console.warn(`No subscription found for ${topic}`);
+      console.warn(`⚠️ No callbacks found for ${topic}`);
     }
   }
 
-  send(destination, message) {
-    
+  /**
+   * Gửi tin nhắn tới destination.
+   */
+  send(destination, messageObject) {
     if (this.client && this.connected) {
-      this.destination[destination] = destination;
-      console.log('Sending message:', message, 'to', destination);
-      this.client.publish({ destination, body: message });
+      const messageString = JSON.stringify(messageObject);
+      console.log(`📤 Sending message to ${destination}:`, messageObject);
+      this.client.publish({ destination, body: messageString });
     } else {
-      console.warn('Cannot send message: WebSocket not connected');
+      console.warn('⚠️ Cannot send message: WebSocket not connected');
     }
   }
 
+  /**
+   * Ngắt kết nối WebSocket, huỷ toàn bộ subscription và callback.
+   */
   disconnect() {
-    if (this.client) {
-      // Unsubscribe tất cả trước khi disconnect
-      Object.keys(this.subscriptions).forEach((topic) => {
-        this.unsubscribe(topic);
-      });
+    Object.keys(this.subscriptions).forEach(topic => {
+      this.subscriptions[topic].unsubscribe();
+      console.log(`🔌 Unsubscribed from ${topic}`);
+    });
 
-      this.client.deactivate();
-      this.connected = false;
-      this.client = null;
-      console.log('Disconnected from WebSocket');
-    }
+    this.client?.deactivate();
+    this.client = null;
+    this.connected = false;
+    this.subscriptions = {};
+    this.callbacks = {};
+    this.pendingSubscriptions = [];
+
+    console.log('🔻 Disconnected WebSocket');
   }
 }
 

@@ -7,6 +7,8 @@ import IconChatList from '../shared/IconChatList';
 import Seperate from '../shared/Seperate';
 import websocketService from '../../services/websocketService';
 import chatService from '../../services/chatService';
+import { v4 as uuidv4 } from 'uuid';
+import { useCallback } from 'react';
 
 const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId }) => {
   const [messages, setMessages] = useState([]);
@@ -18,12 +20,14 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-  console.log("Loc- idConversation: ", idConversation);
-  console.log("Loc- myAccountId: ", myAccountId);
+
+
+  const isDuplicate = (newMessage) => {
+    return messages.some(msg => msg.idMessage == newMessage.idMessage);
+  };
 
   useEffect(() => {
     const fetchMessages = async () => {
-      console.log("Loc- dang fetch api get danh sach tn");
       try {
         const response = await chatService.getMessages(idConversation);
         if (!Array.isArray(response)) throw new Error("API không trả về danh sách tin nhắn!");
@@ -33,36 +37,13 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId
       }
     };
     fetchMessages();
-
-
-    // Kết nối WebSocket và subscribe
-    if (websocketService.connected) {
-      websocketService.subscribe(`/topic/conversation/${idConversation}`, handleReceiveMessage);
-    } else {
-      websocketService.connect(() => {
-        console.log('Connected to WebSocket');
-        websocketService.subscribe(`/topic/conversation/${idConversation}`, handleReceiveMessage);
-      });
-    }
-    // Cleanup khi component unmount
-    return () => {
-      // Nếu cần ngắt subscribe:
-      // websocketService.unsubscribe(`/topic/conversation/${idConversation}`);
-      // console.log('LOC Unsubscribed from', `/topic/conversation/${idConversation}`);
-    };
-
   }, [idConversation]);
-  console.log("LOc: ", messages);
-
-  // const handleMessageChange = (e) => {
-  //   setMessages(e.target.value);
-  // };
 
   const sendMessage = () => {
-
     if (!input.trim()) return;
   
     const message = {
+      messageId: uuidv4(),  // ID duy nhất
       idConversation,
       idAccountSent: myAccountId,
       content: input,
@@ -71,22 +52,33 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId
     };
   
     if (websocketService.connected) {
-      websocketService.send(`/app/send/${idConversation}`, JSON.stringify(message));
+      websocketService.send(`/app/send/${idConversation}`, message);
       setInput('');
+      setMessages(prev => [...prev, message]); // Thêm vào UI luôn, nhưng không bị lặp nhờ ID
     } else {
-      console.warn('WebSocket chưa kết nối, không thể gửi tin nhắn.');
-      // Option: hiện thông báo trên UI hoặc thử kết nối lại
-
+      console.warn('WebSocket chưa kết nối.');
     }
   };
 
 
-  // Hàm xử lý tin nhắn mới nhận từ WebSocket
-  const handleReceiveMessage = (message) => {
-    const receivedMessage = JSON.parse(message);
-    console.log('Loc Received message 1111:', receivedMessage);
-    setMessages((prev) => [...prev, receivedMessage]);
-  };
+  useEffect(() => {
+    const handleMessage = (newMessage) => {
+      
+      if (!isDuplicate(newMessage)) {
+        setMessages(prev => [...prev, newMessage]);
+      }else {
+        console.log('khong gan vao mang');
+      }
+    };
+  
+    const topic = `/topic/conversation/${idConversation}`;
+    websocketService.subscribe(topic, handleMessage); // <- dùng handleMessage
+  
+    return () => {
+    };
+  }, [idConversation]);
+
+
 
   return (
     <div className="w-[66%] h-screen bg-gray-200">
@@ -118,7 +110,7 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId
 
       {/* Body */}
       <div className="body-window-chat bg-gray-200 max-h-[calc(100vh-165px)] overflow-auto scrollbar-thin scrollbar-thumb-gray-400">
-        <div className="pl-3 pr-4 content-message overflow-auto h-[calc(100vh-170px)] bg-gray-200 scrollbar-thin scrollbar-thumb-gray-400 " style={{"padding-right": "20px"}}>
+        <div className="pl-3 pr-4 content-message overflow-auto h-[calc(100vh-170px)] bg-gray-200 scrollbar-thin scrollbar-thumb-gray-400 " style={{"paddingRight": "20px"}}>
           {messages.map((msg, index) => (
             <div key={index} className={`flex mb-2 ${msg.idAccountSent == myAccountId ? "justify-end" : "justify-start"}`}>
 

@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React, { useState, useEffect } from 'react';
 import Seperate from '../shared/Seperate';
 import InfoQuickChat from './InfoQuickChat/InfoQuickChat';
@@ -9,6 +10,7 @@ const ChatList = ({ onSelectConversation }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filteredNames, setFilteredNames] = useState([]);
+  console.log("Loc- conversations: ", filteredNames);
 
   useEffect(() => {
   const fetchConversations = async () => {
@@ -19,8 +21,10 @@ const ChatList = ({ onSelectConversation }) => {
 
       for (let i = 0; i < data.length; i++) {
         const idConversation = data[i].idConversation;
-        websocketService.send(`/app/topic/conversation/${idConversation}`,{}); 
-        console.log("Trung- idConversation: ", idConversation);
+        websocketService.subscribe(`/topic/conversation/${idConversation}`, (message) => {
+          console.log("Loc - Received message for", idConversation, ":", message);
+        });
+        console.log("Loc - Subscribed to idConversation", idConversation);
       }
 
       /////////////////////////////////
