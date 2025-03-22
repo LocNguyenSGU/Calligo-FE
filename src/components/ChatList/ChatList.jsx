@@ -3,119 +3,104 @@ import React, { useState, useEffect } from 'react';
 import Seperate from '../shared/Seperate';
 import InfoQuickChat from './InfoQuickChat/InfoQuickChat';
 import chatService from '../../services/chatService';
-import websocketService from '../../services/websocketService';
-import { useParams } from 'react-router-dom';
+import { useChat } from '../../context/ChatContext';
 
 const ChatList = ({ onSelectConversation }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filteredNames, setFilteredNames] = useState([]);
-  console.log("Loc- conversations: ", filteredNames);
+  const { messages, subscribeToConversation } = useChat();
+  let infoUser = JSON.parse(localStorage.getItem("infoUser"));
+  console.log("LOC-----infoUser: ", infoUser)
 
   useEffect(() => {
-  const fetchConversations = async () => {
-    try {
-      const response = await chatService.getConversationWithIdAccount();
-      console.log("API Response:", response.data); // Kiểm tra dữ liệu trả về
-      const data = response.data;
+    const fetchConversations = async () => {
+      try {
+        const response = await chatService.getConversationWithIdAccount();
+        const data = response.data;
 
-      for (let i = 0; i < data.length; i++) {
-        const idConversation = data[i].idConversation;
-        websocketService.subscribe(`/topic/conversation/${idConversation}`, (message) => {
-          console.log("Loc - Received message for", idConversation, ":", message);
-        });
-        console.log("Loc - Subscribed to idConversation", idConversation);
-      }
+        if (!Array.isArray(data)) {
+          console.error('⚠️ API không trả về danh sách!');
+          return;
+        }
 
-      /////////////////////////////////
-      // Get username
-      const username = await chatService.nameConversation();
-      console.log("Name storage:", username);
-      /////////////////////////////////
-      
-      // loc name conversation
-      const namesList = data.map(chat => {
+        const username = await chatService.nameConversation();
 
-        const users = chat.name.split(","); // Tách chuỗi name thành mảng
-        if(chat.type === "GROUP") {
+        const processedConversations = data.map(chat => {
+          // Subscribes từng cuộc trò chuyện
+          subscribeToConversation(chat.idConversation);
+
+          let name = chat.name;
+          if (chat.type !== 'GROUP') {
+            const users = name.split(',');
+            const otherUsers = users.filter(user => user !== username);
+            name = otherUsers.join(', ');
+          }
           return {
             idConversation: chat.idConversation,
-            name: chat.name,
+            name,
             type: chat.type,
             avatar: chat.avatar,
             numberMember: chat.numberMember,
             dateCreate: chat.dateCreate,
-            idLastMessage: chat.idLastMessage
+            idLastMessage: chat.idLastMessage,
+            lastSender: chat.lastSender || 'Unknown',
+            lastMessage: chat.lastMessage || 'No messages',
+            lastTime: chat.lastTime || 'N/A',
+            isActive: chat.isActive || false,
           };
-        }
-        const otherUsers = users.filter(user => user !== username);
-        return {
-          idConversation: chat.idConversation,
-          name: otherUsers.join(", "), // Ghép lại thành chuỗi nếu còn nhiều tên
-          type: chat.type,
-          avatar: chat.avatar,
-          numberMember: chat.numberMember,
-          dateCreate: chat.dateCreate,
-          idLastMessage: chat.idLast
-        };
-      });
-  
-      setFilteredNames(namesList);
-      //////////////////////////////////////
-      
-      if (!Array.isArray(data)) {
-        throw new Error("API không trả về danh sách cuộc trò chuyện!");
+        });
+
+        setConversations(processedConversations);
+      } catch (error) {
+        console.error('❌ Lỗi khi lấy danh sách trò chuyện:', error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setConversations(data);
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách cuộc trò chuyện:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchConversations();
+  }, [subscribeToConversation]);
 
-  fetchConversations();
-}, []);
-
-  // Hàm xử lý khi click vào conversation
   const handleConversationClick = (conv) => {
     onSelectConversation({
-
-        idConversation: conv.idConversation,  // ID cuộc trò chuyện
-        title: conv.name || "Unnamed",        // Tên cuộc trò chuyện
-        isGroup: conv.type === "GROUP",       // Kiểm tra nhóm chat
-        avatar: conv.avatar || "/public/sidebar/boy.png", // Ảnh đại diện
-        dateCreate: conv.dateCreate || "Unknown",  // Ngày tạo
-        idLastMessage: conv.idLastMessage || "No messages", // Tin nhắn cuối
-        numberMember: conv.numberMember || 0,   // Số thành viên
-        myAccountId:2,
-
+      idConversation: conv.idConversation,
+      title: conv.name,
+      isGroup: conv.type === 'GROUP',
+      avatar: conv.avatar || '/public/sidebar/boy.png',
+      dateCreate: conv.dateCreate,
+      idLastMessage: conv.idLastMessage,
+      numberMember: conv.numberMember,
+      myAccountId: infoUser?.idAccount, // 👉 Chỗ này có thể truyền từ props thay vì hardcode?
     });
   };
 
+  console.log("LOC----Message from chat list: ", messages)
+
   return (
     <div className="h-screen bg-white">
-      {/* <HeaderChatList></HeaderChatList> */}
       <Seperate />
       <div className="body-chatlist overflow-auto h-[calc(100%-68px)]">
-        {filteredNames.map((conv) => (
-          <div
-            key={conv.idConversation}
-            onClick={() => handleConversationClick(conv)}
-            className="cursor-pointer"
-          >
-            <InfoQuickChat
-              img={conv.imgAvatar || '/public/sidebar/boy.png'}
-              isActive={conv.isActive || false} // Giả định trường isActive từ backend
-              title={conv.name || 'Unnamed'}
-              nameSenderLast={conv.lastSender || 'Unknown'} // Giả định trường lastSender
-              contentLast={conv.lastMessage || 'No messages yet'}
-              timeUpdateLast={conv.lastTime || 'N/A'}
-              isGroup={conv.type === 'GROUP'}
-            />
-          </div>
-        ))};
+        {loading ? (
+          <div className="text-center py-4">Đang tải...</div>
+        ) : (
+          conversations.map((conv) => (
+            <div
+              key={conv.idConversation}
+              onClick={() => handleConversationClick(conv)}
+              className="cursor-pointer"
+            >
+              <InfoQuickChat
+                img={conv.avatar || '/public/sidebar/boy.png'}
+                isActive={conv.isActive}
+                title={conv.name}
+                nameSenderLast={conv.lastSender}
+                contentLast={conv.lastMessage}
+                timeUpdateLast={conv.lastTime}
+                isGroup={conv.type === 'GROUP'}
+              />
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
