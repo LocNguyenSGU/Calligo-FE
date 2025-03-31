@@ -6,6 +6,7 @@ import IconChatList from '../shared/IconChatList';
 import Seperate from '../shared/Seperate';
 import chatService from '../../services/chatService';
 import { useChat } from '../../context/ChatContext';
+import VideoCall from '../Call/VideoCall';
 
 const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId }) => {
   const [initialMessages, setInitialMessages] = useState([]);
@@ -13,41 +14,23 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId
   const messagesEndRef = useRef(null);
 
   const { messages, sendMessage } = useChat();
-  console.log("message của windowchat ở sk: ", messages)
-
 
   const allMessages = React.useMemo(() => {
-    console.log("useMemo called for allMessages");
-    console.log("message của windowchat ở sk trong ham: ", messages)
-
     const idKey = String(idConversation);
-    console.log("idKey:", idKey);
-    console.log("messages keys:", Object.keys(messages));
-    console.log("messages[idKey]:", messages[idKey]);
-
-    console.log("messages keys:", Object.keys(messages)); // keys là string
-    console.log("idConversation:", idConversation, "typeof:", typeof idConversation);
-
     const incomingMessages = messages[idKey] || [];
 
     if (!incomingMessages || incomingMessages.length == 0) {
-      console.log("No incoming messages, return initialMessages");
       return [...initialMessages];
     }
 
     const combined = [...initialMessages];
-    console.log("income: ", incomingMessages);
 
     incomingMessages.forEach(msg => {
       if (!combined.some(m => m.idMessage == msg.idMessage)) {
-        console.log("Da push", msg.idMessage);
         combined.push(msg);
-      } else {
-        console.log("Khong push", msg.idMessage);
       }
     });
 
-    console.log("Combined messages:", combined);
     return combined;
   }, [initialMessages, messages, idConversation]);
 
@@ -88,6 +71,21 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId
     }
   };
 
+
+  const [stream, setStream] = useState(null);
+  const [isCalling, setIsCalling] = useState(false);
+
+  const handleCallVideo = () => {
+      navigator.mediaDevices
+          .getUserMedia({ video: true, audio: true })
+          .then((mediaStream) => {
+              setStream(mediaStream);
+              setIsCalling(true); // Hiển thị giao diện call
+          })
+          .catch((error) => console.error("🚫 Lỗi truy cập camera:", error));
+  };
+
+
   return (
     <div className="w-[66%] h-screen bg-gray-200 flex flex-col">
       {/* Header */}
@@ -110,9 +108,16 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId
         </div>
         <div className="flex gap-1">
           {isGroup && <IconChatList src="/public/chatlist/add-group.png" size="16px" />}
-          <IconChatList src="/public/windowchat/cam-recorder.png" />
-          <IconChatList src="/public/windowchat/search-interface-symbol.png" size="16px" />
-          <IconChatList src="/public/windowchat/separate.png" />
+          <div onClick={() => handleCallVideo()} className="cursor-pointer">
+            <IconChatList src="/public/windowchat/cam-recorder.png" />
+          </div>
+          {isCalling && <VideoCall stream={stream} userId={6} partnerId={7} onEndCall={() => setIsCalling(false)} />}
+          <div onClick={() => alert("Chức năng đang phát triển")} className="cursor-pointer">
+            <IconChatList src="/public/windowchat/search-interface-symbol.png" size="16px" />
+          </div>
+          <div onClick={() => alert("Chức năng đang phát triển")} className="cursor-pointer">
+            <IconChatList src="/public/windowchat/separate.png" />
+          </div>
         </div>
       </div>
 

@@ -6,5 +6,10 @@ const userApi = {
         const response = axios.get(`${prefixAPI}/accounts/basic/relation/phone/${phone}/idAccountSource/${idAccountSource}`)
         return response
     },
+
+    updateAccount : async (idAccount, data) => {
+        const response = await axios.put(`${prefixAPI}/accounts/${idAccount}`, data);
+        return response
+    }
 }
 export default userApi;

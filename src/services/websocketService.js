@@ -58,7 +58,6 @@ class WebsocketService {
     }
   
     const alreadyExists = this.callbacks[topic].includes(callback);
-    console.log(`👉 Subscribing callback to ${topic}, already exists: ${alreadyExists}`, callback);
   
     if (!alreadyExists) {
       this.callbacks[topic].push(callback);
@@ -68,11 +67,8 @@ class WebsocketService {
   
     // Nếu chưa sub vào topic này lần nào thì sub thật sự
     if (!this.subscriptions[topic]) {
-      console.log('📡 Subscribing WebSocket to', topic);
       const subscription = this.client.subscribe(topic, (message) => {
         const parsedMessage = JSON.parse(message.body);
-        console.log(`📨 Received message on ${topic}:`, parsedMessage);
-        console.log('🧩 Executing callbacks for topic:', this.callbacks[topic]);
   
         this.callbacks[topic].forEach(cb => cb(parsedMessage));
       });
@@ -88,13 +84,11 @@ class WebsocketService {
   unsubscribe(topic, callback) {
     if (this.callbacks[topic]) {
       this.callbacks[topic] = this.callbacks[topic].filter(cb => cb !== callback);
-      console.log(`🗑️ Removed one callback from ${topic}`);
 
       if (this.callbacks[topic].length === 0) {
         const subscription = this.subscriptions[topic];
         if (subscription) {
           subscription.unsubscribe();
-          console.log(`🔌 Unsubscribed WebSocket from ${topic}`);
           delete this.subscriptions[topic];
         }
         delete this.callbacks[topic];
@@ -110,7 +104,6 @@ class WebsocketService {
   send(destination, messageObject) {
     if (this.client && this.connected) {
       const messageString = JSON.stringify(messageObject);
-      console.log(`📤 Sending message to ${destination}:`, messageObject);
       this.client.publish({ destination, body: messageString });
     } else {
       console.warn('⚠️ Cannot send message: WebSocket not connected');
@@ -123,7 +116,6 @@ class WebsocketService {
   disconnect() {
     Object.keys(this.subscriptions).forEach(topic => {
       this.subscriptions[topic].unsubscribe();
-      console.log(`🔌 Unsubscribed from ${topic}`);
     });
 
     this.client?.deactivate();
@@ -132,8 +124,6 @@ class WebsocketService {
     this.subscriptions = {};
     this.callbacks = {};
     this.pendingSubscriptions = [];
-
-    console.log('🔻 Disconnected WebSocket');
   }
 }
 

@@ -5,5 +5,10 @@ const userService = {
         const response = await userApi.getBasicAccountWithRelation(phone, idAccountSource)
         return response.data;
     },
+
+    updateAccount: async (idAccount, data) => {
+        const response = await userApi.updateAccount(idAccount, data);
+        return response.data;
+    }
 }
 export default userService;

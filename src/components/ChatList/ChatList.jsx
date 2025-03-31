@@ -74,8 +74,6 @@ const ChatList = ({ onSelectConversation }) => {
     });
   };
 
-  console.log("LOC----Message from chat list: ", messages)
-
   return (
     <div className="h-screen bg-white">
       <Seperate />

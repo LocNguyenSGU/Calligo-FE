@@ -17,7 +17,6 @@ export const ChatProvider = ({ children }) => {
   // Connect WebSocket khi app chạy lần đầu
   useEffect(() => {
     websocketServiceInstance.connect();
-    console.log("LOC---= - da ket noi sockets")
     return () => websocketServiceInstance.disconnect(); // cleanup khi app đóng
   }, []);
 
