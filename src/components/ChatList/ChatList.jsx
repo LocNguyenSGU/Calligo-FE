@@ -17,6 +17,7 @@ const ChatList = ({ onSelectConversation }) => {
       try {
         const response = await chatService.getConversationWithIdAccount();
         const data = response.data;
+        console.log("LOC----data: ", data);
 
         if (!Array.isArray(data)) {
           console.error('⚠️ API không trả về danh sách!');
@@ -45,11 +46,12 @@ const ChatList = ({ onSelectConversation }) => {
             idLastMessage: chat.idLastMessage,
             lastSender: chat.lastSender || 'Unknown',
             lastMessage: chat.lastMessage || 'No messages',
-            lastTime: chat.lastTime || 'N/A',
-            isActive: chat.isActive || false,
+            lastTime: chat.lastSeen || 'N/A',
+            isActive: chat.status || false,
+
           };
         });
-
+        console.log("LOC----data-new: ", processedConversations);
         setConversations(processedConversations);
       } catch (error) {
         console.error('❌ Lỗi khi lấy danh sách trò chuyện:', error);
@@ -70,6 +72,8 @@ const ChatList = ({ onSelectConversation }) => {
       dateCreate: conv.dateCreate,
       idLastMessage: conv.idLastMessage,
       numberMember: conv.numberMember,
+      isActive: conv.isActive,
+      lastTime: conv.lastTime,
       myAccountId: infoUser?.idAccount, // 👉 Chỗ này có thể truyền từ props thay vì hardcode?
     });
   };

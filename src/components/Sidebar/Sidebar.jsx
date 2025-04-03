@@ -4,6 +4,7 @@ import IconNavigaion from '../shared/IconNavigaion';
 import { useState } from 'react';
 import { Modal } from 'antd';
 import ModalInfoAccount from '../modals/ModalInfoAccount';
+import authService from '../../services/authService';
 
 const Sidebar = () => {
     const navigation = useNavigate();
@@ -17,10 +18,10 @@ const Sidebar = () => {
     };
 
     const infoUser = JSON.parse(localStorage.getItem("infoUser"));
-    const handleLogout = () => {
+    const handleLogout = async () => {
         if (window.confirm("Are you sure you want to logout?")) { // Thêm xác nhận
-            localStorage.removeItem('token');
-            console.log("User logged out successfully");
+            const response = await authService.logout();
+            console.log("Response logout: ", response);
             navigation('/signin');
         }
     };

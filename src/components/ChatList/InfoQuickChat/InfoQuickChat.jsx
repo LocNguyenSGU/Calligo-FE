@@ -9,7 +9,7 @@ const truncateText = (text, maxLength) => {
 };
 
 // eslint-disable-next-line react/prop-types
-const InfoQuickChat = ({ img, title, nameSenderLast, contentLast, timeUpdateLast, isGroup = false, isActive = false}) => {
+const InfoQuickChat = ({ img, title, nameSenderLast, contentLast, timeUpdateLast, isGroup = false, isActive = false }) => {
     const MAX_NAME_LENGTH = 15; // Giới hạn cố định cho nameSenderLast
     const TOTAL_CONTENT_LENGTH = 36; 
 
@@ -19,6 +19,8 @@ const InfoQuickChat = ({ img, title, nameSenderLast, contentLast, timeUpdateLast
     const truncatedName = truncateText(nameSenderLast, MAX_NAME_LENGTH);
     const truncatedContent = truncateText(contentLast, remainingLength);
 
+    console.log("LOC---title: ", title);
+    console.log("LOC---isActive: ", timeUpdateLast);
     return (
         <div 
         className={`flex items-center py-2 px-3 hover:bg-gray-100 cursor-pointer ${
@@ -38,7 +40,16 @@ const InfoQuickChat = ({ img, title, nameSenderLast, contentLast, timeUpdateLast
                         )}
                         {truncateText(title, 20)} {/* Title vẫn cố định 20 ký tự */}
                     </p>
-                    <p className="text-xs text-gray-500">{timeUpdateLast}</p>
+                    {isActive ? (
+                        <p className="text-xs text-gray-500">Online</p>
+                    ) : (
+                        timeUpdateLast !== 'N/A' ?(
+                            <p className="text-xs text-gray-500">{timeUpdateLast}</p>                    
+                        ) : (
+                            null
+                        )
+                        )}
+                    
                 </div>
                 <div className="flex text-xs text-gray-500 truncate">
                     {truncatedName && <p className="mr-1">{truncatedName}:</p>}

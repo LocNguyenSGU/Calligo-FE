@@ -7,13 +7,15 @@ import Seperate from '../shared/Seperate';
 import chatService from '../../services/chatService';
 import { useChat } from '../../context/ChatContext';
 
-const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId }) => {
+const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId ,isActive, numberMember}) => {
   const [initialMessages, setInitialMessages] = useState([]);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
 
   const { messages, sendMessage } = useChat();
   console.log("message của windowchat ở sk: ", messages)
+
+  console.log("all props: ", src, title, isGroup, lastTime, idConversation, myAccountId ,isActive, numberMember)
 
 
   const allMessages = React.useMemo(() => {
@@ -97,12 +99,20 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId
           <div className="flex flex-col gap-[2px]">
             <span className="font-medium">{title}</span>
             {!isGroup ? (
-              <p className="font-light text-sm">Đang hoạt động || Truy cập hôm qua</p>
+                isActive ? (
+                  <p className="font-light text-sm">Đang hoạt động</p>
+                ) : (
+                  lastTime !== 'N/A' ? (
+                  <p className="font-light text-sm">Hoạt động {lastTime}</p>
+                ) : (
+                  null
+                )
+              )
             ) : (
               <div className="flex gap-1 items-center">
                 <img src="/public/chatlist/icons8-person-64.png" className="w-4 h-4" alt="group" />
                 <p className="font-light text-sm">
-                  <span className="number-people">30</span> thành viên
+                  <span className="number-people">{numberMember}</span> thành viên
                 </p>
               </div>
             )}

@@ -18,9 +18,11 @@ const authService = {
         }
         return response.data;
     },
-    logout: () => {
+    logout: async () => {
+        const response = await authApi.logout();
         localStorage.removeItem('token');
         localStorage.removeItem('infoUser');
+        return response.data;
     },
     getAccountByPhone: async(phone) => {
         const response = await authApi.getAccountByPhone(phone);

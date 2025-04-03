@@ -3,7 +3,9 @@ import { addressAPI } from '../utils/prefixAPI';
 const prefixAPI = `${addressAPI}/api/v1/user-service`;
 const authApi = {
     login: async (credentials) => {
-        const response = axios.post(`${prefixAPI}/auth/login`, credentials)
+        const response = axios.post(`${prefixAPI}/auth/login`, credentials, {
+            withCredentials: true, // 🔥 Quan trọng để trình duyệt nhận cookie
+        });
         return response
     },
     register: async (data) => {
@@ -13,6 +15,9 @@ const authApi = {
     verify: async () => {
         const response = await axios.get(`${prefixAPI}/accounts/info`);
         return response 
+    },
+    logout: async () => {
+        return axios.post(`${prefixAPI}/auth/logout`,{},{ withCredentials: true });
     },
     refreshToken: async () => {
         // Gọi API refresh token
