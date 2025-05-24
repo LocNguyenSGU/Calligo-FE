@@ -1,32 +1,36 @@
 /* eslint-disable react/prop-types */
-import React, { useEffect, useRef, useState } from 'react';
-import TextArea from 'antd/es/input/TextArea';
-import Avatar from '../shared/Avatar';
-import IconChatList from '../shared/IconChatList';
-import Seperate from '../shared/Seperate';
-import chatService from '../../services/chatService';
-import { useChat } from '../../context/ChatContext';
-import VideoCall from '../Call/VideoCall';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import TextArea from "antd/es/input/TextArea";
+import Avatar from "../shared/Avatar";
+import IconChatList from "../shared/IconChatList";
+import chatService from "../../services/chatService";
+import { useChat } from "../../context/ChatContext";
+import { Upload, Button, message } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 
-const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId }) => {
+const WindowChat = ({
+  src,
+  title,
+  isGroup,
+  lastTime,
+  idConversation,
+  myAccountId,
+}) => {
   const [initialMessages, setInitialMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const messagesEndRef = useRef(null);
+  const [input, setInput] = useState("");
+  const [fileList, setFileList] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState([]);
 
+  const messagesEndRef = useRef(null);
   const { messages, sendMessage } = useChat();
 
-  const allMessages = React.useMemo(() => {
-    const idKey = String(idConversation);
-    const incomingMessages = messages[idKey] || [];
-
-    if (!incomingMessages || incomingMessages.length == 0) {
-      return [...initialMessages];
-    }
-
+  const allMessages = useMemo(() => {
+    const incomingMessages = messages[String(idConversation)] || [];
     const combined = [...initialMessages];
 
-    incomingMessages.forEach(msg => {
-      if (!combined.some(m => m.idMessage == msg.idMessage)) {
+    incomingMessages.forEach((msg) => {
+      if (!combined.some((m) => m.idMessage === msg.idMessage)) {
         combined.push(msg);
       }
     });
@@ -34,57 +38,112 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId
     return combined;
   }, [initialMessages, messages, idConversation]);
 
-  // Scroll to bottom khi allMessages thay đổi
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [allMessages]);
 
-  // Fetch tin nhắn ban đầu từ API
   useEffect(() => {
     const fetchMessages = async () => {
       try {
+        console.log("HHHIHIHIHHIH1 ", idConversation)
         const response = await chatService.getMessages(idConversation);
-        if (!Array.isArray(response)) throw new Error("API không trả về danh sách tin nhắn!");
+        console.log("HHHIHIHIHHIH2 ", response)
+        if (!Array.isArray(response)) throw new Error("API không hợp lệ!");
         setInitialMessages(response);
       } catch (error) {
-        console.error("Lỗi khi lấy danh sách tin nhắn:", error);
+        console.error("Lỗi khi tải tin nhắn:", error);
       }
     };
+
     fetchMessages();
   }, [idConversation]);
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return;
-    const message = {
+  const handleSendMessage = async () => {
+    if (!input.trim() && fileList.length === 0) return;
+
+    if (fileList.length > 0) {
+      await handleUploadImages();
+      return;
+    }
+
+    sendMessage(idConversation, {
       idConversation,
       idAccountSent: myAccountId,
       content: input.trim(),
-    };
-    sendMessage(idConversation, message);
-    setInput('');
+      type: "TEXT",
+    });
+
+    setInput("");
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
+  const handleFileChange = ({ fileList }) => setFileList(fileList);
 
-  const [stream, setStream] = useState(null);
-  const [isCalling, setIsCalling] = useState(false);
+  const handleUploadImages = async () => {
+    try {
+      setUploading(true);
 
-  const handleCallVideo = () => {
-      navigator.mediaDevices
-          .getUserMedia({ video: true, audio: true })
-          .then((mediaStream) => {
-              setStream(mediaStream);
-              setIsCalling(true); // Hiển thị giao diện call
-          })
-          .catch((error) => console.error("🚫 Lỗi truy cập camera:", error));
+      const uploadPromises = fileList.map((file, index) => {
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          const formData = new FormData();
+          formData.append("file", file.originFileObj);
+          formData.append("upload_preset", "calligo_preset");
+
+          xhr.open(
+            "POST",
+            "https://api.cloudinary.com/v1_1/doycy5gbl/image/upload",
+            true
+          );
+
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const progress = Math.round((event.loaded / event.total) * 100);
+              console.log(`Ảnh ${index + 1} đang upload: ${progress}%`); // 👉 log ra % tiến trình
+              setUploadProgress((prev) => {
+                const newProgress = [...prev];
+                newProgress[index] = progress;
+                return newProgress;
+              });
+            }
+          };
+
+          xhr.onload = () =>
+            resolve(JSON.parse(xhr.responseText).secure_url);
+          xhr.onerror = reject;
+
+          xhr.send(formData);
+        });
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+
+      for (const url of uploadedUrls) {
+        sendMessage(idConversation, {
+          idConversation,
+          idAccountSent: myAccountId,
+          content: url,
+          type: "IMAGE",
+        });
+      }
+
+      message.success("Gửi hình ảnh thành công!");
+      setInput("");
+      setFileList([]);
+      setUploadProgress([]);
+    } catch (error) {
+      console.error("Upload thất bại:", error);
+      message.error("Tải ảnh thất bại");
+    } finally {
+      setUploading(false);
+    }
   };
-
 
   return (
     <div className="w-[66%] h-screen bg-gray-200 flex flex-col">
@@ -95,10 +154,16 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId
           <div className="flex flex-col gap-[2px]">
             <span className="font-medium">{title}</span>
             {!isGroup ? (
-              <p className="font-light text-sm">Đang hoạt động || Truy cập hôm qua</p>
+              <p className="font-light text-sm">
+                Đang hoạt động || Truy cập hôm qua
+              </p>
             ) : (
               <div className="flex gap-1 items-center">
-                <img src="/public/chatlist/icons8-person-64.png" className="w-4 h-4" alt="group" />
+                <img
+                  src="/public/chatlist/icons8-person-64.png"
+                  className="w-4 h-4"
+                  alt="group"
+                />
                 <p className="font-light text-sm">
                   <span className="number-people">30</span> thành viên
                 </p>
@@ -107,72 +172,109 @@ const WindowChat = ({ src, title, isGroup, lastTime, idConversation, myAccountId
           </div>
         </div>
         <div className="flex gap-1">
-          {isGroup && <IconChatList src="/public/chatlist/add-group.png" size="16px" />}
-          <div onClick={() => handleCallVideo()} className="cursor-pointer">
-            <IconChatList src="/public/windowchat/cam-recorder.png" />
-          </div>
-          {isCalling && <VideoCall stream={stream} userId={6} partnerId={7} onEndCall={() => setIsCalling(false)} />}
-          <div onClick={() => alert("Chức năng đang phát triển")} className="cursor-pointer">
-            <IconChatList src="/public/windowchat/search-interface-symbol.png" size="16px" />
-          </div>
-          <div onClick={() => alert("Chức năng đang phát triển")} className="cursor-pointer">
-            <IconChatList src="/public/windowchat/separate.png" />
-          </div>
+          {isGroup && (
+            <IconChatList src="/public/chatlist/add-group.png" size="16px" />
+          )}
+          <IconChatList
+            src="/public/windowchat/cam-recorder.png"
+            onClick={() => alert("Chức năng đang phát triển")}
+          />
+          <IconChatList
+            src="/public/windowchat/search-interface-symbol.png"
+            size="16px"
+            onClick={() => alert("Chức năng đang phát triển")}
+          />
+          <IconChatList
+            src="/public/windowchat/separate.png"
+            onClick={() => alert("Chức năng đang phát triển")}
+          />
         </div>
       </div>
 
-      {/* Body */}
+      {/* Messages */}
       <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-400 p-3 pr-4 bg-gray-200">
-        {allMessages.map((msg) => (
-          <div
-            key={msg.idMessage}
-            className={`flex mb-2 ${msg.idAccountSent == myAccountId ? "justify-end" : "justify-start"}`}
-          >
-            <div className={`flex items-start gap-2 ${msg.idAccountSent == myAccountId ? "flex-row-reverse" : "flex-row"}`}>
-              <div className="w-9 h-9 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">
-                {msg.name?.[0] || "U"}
-              </div>
-              <div className={`mr-5 px-4 py-3 rounded-md max-w-[75%] text-gray-600 box-shadow-message ${msg.idAccountSent == myAccountId ? 'bg-blue-100' : 'bg-white'}`}>
-                {msg.idAccountSent == myAccountId && (
-                  <span className="text-gray-700 font-light text-sm inline-block mb-1">
-                    {msg.idAccountSent}
-                  </span>
+        {allMessages.map((msg, index) => {
+          const isMine = msg.idAccountSent == myAccountId;
+          const prevMsg = allMessages[index - 1];
+          const isFirstOfGroup =
+            !prevMsg || prevMsg.idAccountSent !== msg.idAccountSent;
+
+          return (
+            <div
+              key={msg.idMessage}
+              className={`flex mb-2 ${isMine ? "justify-end" : "justify-start"
+                }`}
+            >
+              <div className={`flex ${isMine ? "flex-row-reverse" : "flex-row"} items-start gap-2`}>
+                {isFirstOfGroup && !isMine && (
+                  <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    {msg.name?.[0] || "U"}
+                  </div>
                 )}
-                <div className="text-black text-base">{msg.content}</div>
-                <span className="text-gray-700 font-light text-xs inline-block mt-1">
-                  {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                </span>
+                {!isFirstOfGroup && !isMine && <div className="w-8" />} {/* Spacer */}
+
+                <div
+                  className={`px-4 py-2 rounded-xl max-w-[75%] text-gray-700 text-sm break-words whitespace-pre-wrap ${isMine ? "bg-blue-100" : "bg-white"
+                    }`}
+                  style={{
+                    marginTop: isFirstOfGroup ? "12px" : "2px",
+                    borderRadius: isFirstOfGroup
+                      ? "18px 18px 18px 4px"
+                      : "6px 18px 18px 6px",
+                  }}
+                >
+                  {msg.type === "IMAGE" ? (
+                    <img
+                      src={msg.content}
+                      alt="img"
+                      className="rounded-md max-w-full"
+                    />
+                  ) : (
+                    msg.content
+                  )}
+                  <div className="text-[11px] text-right text-gray-500 mt-1">
+                    {msg.timestamp
+                      ? new Date(msg.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                      : ""}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <div className="bg-white sticky bottom-0">
-        <div className="flex items-center gap-4 px-2 py-1">
-          <IconChatList size="23px" src="/public/windowchat/image-gallery.png" />
-          <IconChatList size="23px" src="/public/windowchat/paper.png" />
+      <div className="bg-white p-2 border-t">
+        <div className="flex items-center gap-2 mb-2">
+          <Upload
+            multiple
+            beforeUpload={() => false}
+            fileList={fileList}
+            onChange={handleFileChange}
+          >
+            <Button icon={<UploadOutlined />}>Tải ảnh</Button>
+          </Upload>
         </div>
-        <Seperate />
-        <div className="p-2 flex items-center justify-between gap-2">
-          <div className="w-[90%]">
-            <TextArea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Nhập nội dung ..."
-              autoSize={{ minRows: 1, maxRows: 5 }}
-              style={{ fontSize: '16px' }}
-              onKeyDown={handleKeyPress}
-            />
-          </div>
-          <div className="w-[10%] flex items-center justify-center gap-2">
-            <IconChatList size="23px" src="/public/windowchat/happy.png" />
-            <div onClick={handleSendMessage} className="cursor-pointer">
-              <IconChatList size="25px" src="/public/windowchat/paper-plane.png" />
-            </div>
-          </div>
+        <TextArea
+          rows={2}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyPress}
+          placeholder="Nhập tin nhắn..."
+        />
+        <div className="flex justify-end mt-2">
+          <Button
+            type="primary"
+            onClick={handleSendMessage}
+            loading={uploading}
+          >
+            Gửi
+          </Button>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { getTimeAgo } from "../../../utils/getTimeAgo";
 import Avatar from "../../shared/Avatar";
 
 // Hàm cắt chuỗi nếu dài hơn giới hạn
@@ -38,7 +39,7 @@ const InfoQuickChat = ({ img, title, nameSenderLast, contentLast, timeUpdateLast
                         )}
                         {truncateText(title, 20)} {/* Title vẫn cố định 20 ký tự */}
                     </p>
-                    <p className="text-xs text-gray-500">{timeUpdateLast}</p>
+                    <p className="text-xs text-gray-500">{getTimeAgo(timeUpdateLast)}</p>
                 </div>
                 <div className="flex text-xs text-gray-500 truncate">
                     {truncatedName && <p className="mr-1">{truncatedName}:</p>}

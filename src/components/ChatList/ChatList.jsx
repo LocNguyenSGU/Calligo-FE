@@ -1,78 +1,84 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useEffect } from 'react';
-import Seperate from '../shared/Seperate';
-import InfoQuickChat from './InfoQuickChat/InfoQuickChat';
-import chatService from '../../services/chatService';
-import { useChat } from '../../context/ChatContext';
+import React, { useState, useEffect } from "react";
+import Seperate from "../shared/Seperate";
+import InfoQuickChat from "./InfoQuickChat/InfoQuickChat";
+import chatService from "../../services/chatService";
+import { useChat } from "../../context/ChatContext";
 
 const ChatList = ({ onSelectConversation }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { messages, subscribeToConversation } = useChat();
-  let infoUser = JSON.parse(localStorage.getItem("infoUser"));
-  console.log("LOC-----infoUser: ", infoUser)
+  const { message, subscribeToConversation } = useChat();
+  const infoUser = JSON.parse(localStorage.getItem("infoUser"));
 
   useEffect(() => {
     const fetchConversations = async () => {
       try {
         const response = await chatService.getConversationWithIdAccount();
-        const data = response.data;
+        const raw = response.data.data;
 
-        if (!Array.isArray(data)) {
-          console.error('⚠️ API không trả về danh sách!');
+        if (!Array.isArray(raw)) {
+          console.warn("API không trả về danh sách.");
           return;
         }
 
-        const username = await chatService.nameConversation();
-
-        const processedConversations = data.map(chat => {
-          // Subscribes từng cuộc trò chuyện
-          subscribeToConversation(chat.idConversation);
-
-          let name = chat.name;
-          if (chat.type !== 'GROUP') {
-            const users = name.split(',');
-            const otherUsers = users.filter(user => user !== username);
-            name = otherUsers.join(', ');
-          }
-          return {
-            idConversation: chat.idConversation,
-            name,
-            type: chat.type,
-            avatar: chat.avatar,
-            numberMember: chat.numberMember,
-            dateCreate: chat.dateCreate,
-            idLastMessage: chat.idLastMessage,
-            lastSender: chat.lastSender || 'Unknown',
-            lastMessage: chat.lastMessage || 'No messages',
-            lastTime: chat.lastTime || 'N/A',
-            isActive: chat.isActive || false,
-          };
-        });
-
-        setConversations(processedConversations);
+        const normalized = normalizeConversations(raw, infoUser?.idAccount);
+        // Sắp xếp theo thời gian cập nhật gần nhất
+        normalized.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        setConversations(normalized);
       } catch (error) {
-        console.error('❌ Lỗi khi lấy danh sách trò chuyện:', error);
+        console.error("❌ Lỗi khi lấy danh sách trò chuyện:", error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchConversations();
-  }, [subscribeToConversation]);
+  }, [infoUser?.idAccount]);
 
-  const handleConversationClick = (conv) => {
-    onSelectConversation({
-      idConversation: conv.idConversation,
-      title: conv.name,
-      isGroup: conv.type === 'GROUP',
-      avatar: conv.avatar || '/public/sidebar/boy.png',
-      dateCreate: conv.dateCreate,
-      idLastMessage: conv.idLastMessage,
-      numberMember: conv.numberMember,
-      myAccountId: infoUser?.idAccount, // 👉 Chỗ này có thể truyền từ props thay vì hardcode?
+  // Chuẩn hóa dữ liệu trả về từ API để dễ dùng hơn
+  const normalizeConversations = (rawData, userId) => {
+    return rawData.map((conv) => {
+      const isGroup = conv.type === "GROUP";
+      const otherParticipants = conv.participantInfos.filter(
+        (p) => p.idAccount !== userId
+      );
+
+      const displayName = isGroup
+        ? conv.name
+        : otherParticipants[0]?.nickname || "No Name";
+
+      const avatar = isGroup
+        ? conv.avatar || "/public/sidebar/group.png"
+        : otherParticipants[0]?.avatar || "/public/sidebar/boy.png";
+
+      return {
+        id: conv.idConversation,
+        isGroup,
+        avatar,
+        title: displayName,
+        lastMessage: conv.lastMessageContent || "",
+        updatedAt: conv.dateCreate,
+        participants: conv.participantInfos,
+      };
     });
   };
+
+  // 🔄 Chuẩn bị cho cập nhật realtime (giả sử socket push về newConv)
+  useEffect(() => {
+    const unsubscribe = subscribeToConversation((newConvRaw) => {
+      const newConv = normalizeConversations([newConvRaw], infoUser?.idAccount)[0];
+
+      setConversations((prev) => {
+        const updated = [...prev.filter(c => c.id !== newConv.id), newConv];
+        return updated.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      });
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [infoUser?.idAccount]);
 
   return (
     <div className="h-screen bg-white">
@@ -83,18 +89,18 @@ const ChatList = ({ onSelectConversation }) => {
         ) : (
           conversations.map((conv) => (
             <div
-              key={conv.idConversation}
-              onClick={() => handleConversationClick(conv)}
+              key={conv.id}
               className="cursor-pointer"
+              onClick={() => onSelectConversation?.(conv)}
             >
               <InfoQuickChat
-                img={conv.avatar || '/public/sidebar/boy.png'}
+                img={conv.avatar}
                 isActive={conv.isActive}
-                title={conv.name}
-                nameSenderLast={conv.lastSender}
+                title={conv.title}
+                nameSenderLast={""} // Có thể cập nhật nếu backend trả về sender name
                 contentLast={conv.lastMessage}
-                timeUpdateLast={conv.lastTime}
-                isGroup={conv.type === 'GROUP'}
+                timeUpdateLast={conv.updatedAt}
+                isGroup={conv.isGroup}
               />
             </div>
           ))
