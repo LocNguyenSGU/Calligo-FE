@@ -4,11 +4,12 @@ import Seperate from "../shared/Seperate";
 import InfoQuickChat from "./InfoQuickChat/InfoQuickChat";
 import chatService from "../../services/chatService";
 import { useChat } from "../../context/ChatContext";
+import { number } from "yup";
 
 const ChatList = ({ onSelectConversation }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { message, subscribeToConversation } = useChat();
+  const { messages, subscribeToConversation } = useChat();
   const infoUser = JSON.parse(localStorage.getItem("infoUser"));
 
   useEffect(() => {
@@ -23,6 +24,9 @@ const ChatList = ({ onSelectConversation }) => {
         }
 
         const normalized = normalizeConversations(raw, infoUser?.idAccount);
+        normalized.forEach(element => {
+          subscribeToConversation(element.id);
+        });
         // Sắp xếp theo thời gian cập nhật gần nhất
         normalized.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         setConversations(normalized);
@@ -35,6 +39,8 @@ const ChatList = ({ onSelectConversation }) => {
 
     fetchConversations();
   }, [infoUser?.idAccount]);
+
+  console.log("MESSAGE IN CHATLIST: ", messages)
 
   // Chuẩn hóa dữ liệu trả về từ API để dễ dùng hơn
   const normalizeConversations = (rawData, userId) => {
@@ -58,27 +64,39 @@ const ChatList = ({ onSelectConversation }) => {
         avatar,
         title: displayName,
         lastMessage: conv.lastMessageContent || "",
-        updatedAt: conv.dateCreate,
+        updatedAt: conv.dateUpdateMessage,
         participants: conv.participantInfos,
+        numberMember: conv.numberMember || "3"
       };
     });
   };
 
-  // 🔄 Chuẩn bị cho cập nhật realtime (giả sử socket push về newConv)
   useEffect(() => {
-    const unsubscribe = subscribeToConversation((newConvRaw) => {
-      const newConv = normalizeConversations([newConvRaw], infoUser?.idAccount)[0];
+  if (!messages || Object.keys(messages).length === 0) return;
 
-      setConversations((prev) => {
-        const updated = [...prev.filter(c => c.id !== newConv.id), newConv];
-        return updated.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-      });
+  setConversations((prevConversations) => {
+    const updatedConversations = [...prevConversations];
+
+    Object.entries(messages).forEach(([convId, messageList]) => {
+      if (Array.isArray(messageList) && messageList.length > 0) {
+        const latestMessage = messageList[messageList.length - 1];
+
+        const index = updatedConversations.findIndex((conv) => conv.id === convId);
+        if (index !== -1) {
+          updatedConversations[index] = {
+            ...updatedConversations[index],
+            lastMessage: latestMessage.content,
+            updatedAt: latestMessage.timeSent,
+          };
+        }
+      }
     });
 
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, [infoUser?.idAccount]);
+    return updatedConversations.sort(
+      (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+    );
+  });
+}, [messages]);
 
   return (
     <div className="h-screen bg-white">
@@ -101,6 +119,7 @@ const ChatList = ({ onSelectConversation }) => {
                 contentLast={conv.lastMessage}
                 timeUpdateLast={conv.updatedAt}
                 isGroup={conv.isGroup}
+
               />
             </div>
           ))

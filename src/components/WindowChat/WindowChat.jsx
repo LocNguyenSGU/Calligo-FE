@@ -15,6 +15,7 @@ const WindowChat = ({
   lastTime,
   idConversation,
   myAccountId,
+  numberMember
 }) => {
   const [initialMessages, setInitialMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -165,7 +166,7 @@ const WindowChat = ({
                   alt="group"
                 />
                 <p className="font-light text-sm">
-                  <span className="number-people">30</span> thành viên
+                  <span className="number-people">{numberMember}</span> thành viên
                 </p>
               </div>
             )}
@@ -205,7 +206,7 @@ const WindowChat = ({
               className={`flex mb-2 ${isMine ? "justify-end" : "justify-start"
                 }`}
             >
-              <div className={`flex ${isMine ? "flex-row-reverse" : "flex-row"} items-start gap-2`}>
+              <div className={`flex ${isMine ? "flex-row-reverse" : "flex-row"} items-start gap-2 w-full`}>
                 {isFirstOfGroup && !isMine && (
                   <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-bold">
                     {msg.name?.[0] || "U"}
