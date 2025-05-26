@@ -7,6 +7,7 @@ import chatService from "../../services/chatService";
 import { useChat } from "../../context/ChatContext";
 import { Upload, Button, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
+import { SendOutlined } from '@ant-design/icons';
 
 const WindowChat = ({
   src,
@@ -15,7 +16,8 @@ const WindowChat = ({
   lastTime,
   idConversation,
   myAccountId,
-  numberMember
+  numberMember,
+  participants
 }) => {
   const [initialMessages, setInitialMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -23,6 +25,10 @@ const WindowChat = ({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState([]);
 
+  const getLinkAvatarByIdAccount = (idAccountSent) => {
+    const participant = participants.find(p => p.idAccount == idAccountSent);
+    return participant?.imgAvatar || null; // Nếu không có thì trả về null
+  };
   const messagesEndRef = useRef(null);
   const { messages, sendMessage } = useChat();
 
@@ -46,9 +52,7 @@ const WindowChat = ({
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        console.log("HHHIHIHIHHIH1 ", idConversation)
         const response = await chatService.getMessages(idConversation);
-        console.log("HHHIHIHIHHIH2 ", response)
         if (!Array.isArray(response)) throw new Error("API không hợp lệ!");
         setInitialMessages(response);
       } catch (error) {
@@ -126,6 +130,7 @@ const WindowChat = ({
       const uploadedUrls = await Promise.all(uploadPromises);
 
       for (const url of uploadedUrls) {
+        console.log(url)
         sendMessage(idConversation, {
           idConversation,
           idAccountSent: myAccountId,
@@ -151,7 +156,7 @@ const WindowChat = ({
       {/* Header */}
       <div className="flex justify-between items-center p-3 bg-white border border-gray-200 border-t-0">
         <div className="flex gap-2">
-          <Avatar src={src || "/public/sidebar/woman.png"} />
+          <Avatar src={src || "/public/sidebar/woman.png"}/>
           <div className="flex flex-col gap-[2px]">
             <span className="font-medium">{title}</span>
             {!isGroup ? (
@@ -193,7 +198,7 @@ const WindowChat = ({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-400 p-3 pr-4 bg-gray-200">
+      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-400 p-3 pr-4 bg-gray-200 " style={{ marginBottom: "100px" }}>
         {allMessages.map((msg, index) => {
           const isMine = msg.idAccountSent == myAccountId;
           const prevMsg = allMessages[index - 1];
@@ -209,13 +214,13 @@ const WindowChat = ({
               <div className={`flex ${isMine ? "flex-row-reverse" : "flex-row"} items-start gap-2 w-full`}>
                 {isFirstOfGroup && !isMine && (
                   <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    {msg.name?.[0] || "U"}
+                    <Avatar src={getLinkAvatarByIdAccount(msg.idAccountSent)} size="30px"></Avatar>
                   </div>
                 )}
                 {!isFirstOfGroup && !isMine && <div className="w-8" />} {/* Spacer */}
 
                 <div
-                  className={`px-4 py-2 rounded-xl max-w-[75%] text-gray-700 text-sm break-words whitespace-pre-wrap ${isMine ? "bg-blue-100" : "bg-white"
+                  className={`px-4 py-2 rounded-xl max-w-[75%] text-gray-700 text-sm break-words box-shadow-message whitespace-pre-wrap ${isMine ? "bg-blue-100" : "bg-white"
                     }`}
                   style={{
                     marginTop: isFirstOfGroup ? "12px" : "2px",
@@ -233,9 +238,9 @@ const WindowChat = ({
                   ) : (
                     msg.content
                   )}
-                  <div className="text-[11px] text-right text-gray-500 mt-1">
-                    {msg.timestamp
-                      ? new Date(msg.timestamp).toLocaleTimeString([], {
+                  <div className="text-xs text-right text-gray-500 mt-1">
+                    {msg.timeSent
+                      ? new Date(msg.timeSent).toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
                       })
@@ -250,32 +255,42 @@ const WindowChat = ({
       </div>
 
       {/* Input */}
-      <div className="bg-white p-2 border-t">
-        <div className="flex items-center gap-2 mb-2">
+      <div
+        className="bg-white p-2 border-t fixed bottom-0"
+        style={{ width: '48.18%' }}
+      >
+        {/* Upload ảnh */}
+        <div className="mb-2">
           <Upload
             multiple
             beforeUpload={() => false}
             fileList={fileList}
             onChange={handleFileChange}
+            showUploadList={{ showRemoveIcon: true }}
           >
             <Button icon={<UploadOutlined />}>Tải ảnh</Button>
           </Upload>
         </div>
-        <TextArea
-          rows={2}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyPress}
-          placeholder="Nhập tin nhắn..."
-        />
-        <div className="flex justify-end mt-2">
+
+        {/* Input và nút gửi nằm cùng hàng */}
+        <div className="flex items-center gap-2">
+          <TextArea
+            className="flex-1"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder="Nhập tin nhắn..."
+            autoSize={{ minRows: 1, maxRows: 5 }}
+          />
+
           <Button
             type="primary"
             onClick={handleSendMessage}
             loading={uploading}
-          >
-            Gửi
-          </Button>
+            icon={<SendOutlined />}
+            size="large"
+          // Chỉ hiển thị icon không text
+          />
         </div>
       </div>
     </div>

@@ -26,7 +26,7 @@ const PageChat = () => {
             <div className='w-[73%] bg-blue-200 flex fixed ml-[395px] h-screen'>
               {selectConversation && 
               <>
-                 <WindowChat src={selectConversation?.avartar} idConversation={selectConversation?.id} title={selectConversation?.title} isGroup={selectConversation?.isGroup} myAccountId={infoUser.idAccount} numberMember={selectConversation?.numberMember} />
+                 <WindowChat src={selectConversation?.avatar} idConversation={selectConversation?.id} title={selectConversation?.title} isGroup={selectConversation?.isGroup} myAccountId={infoUser.idAccount} numberMember={selectConversation?.numberMember} participants={selectConversation?.participants} />
                  <InfoPanel isGroup={selectConversation?.isGroup}/>
               </>
               }

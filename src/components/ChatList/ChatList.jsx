@@ -47,7 +47,7 @@ const ChatList = ({ onSelectConversation }) => {
     return rawData.map((conv) => {
       const isGroup = conv.type === "GROUP";
       const otherParticipants = conv.participantInfos.filter(
-        (p) => p.idAccount !== userId
+        (p) => p.idAccount != userId
       );
 
       const displayName = isGroup
@@ -56,7 +56,7 @@ const ChatList = ({ onSelectConversation }) => {
 
       const avatar = isGroup
         ? conv.avatar || "/public/sidebar/group.png"
-        : otherParticipants[0]?.avatar || "/public/sidebar/boy.png";
+        : otherParticipants[0]?.imgAvatar || "/public/sidebar/boy.png";
 
       return {
         id: conv.idConversation,
@@ -70,6 +70,7 @@ const ChatList = ({ onSelectConversation }) => {
       };
     });
   };
+
 
   useEffect(() => {
   if (!messages || Object.keys(messages).length === 0) return;
@@ -119,7 +120,6 @@ const ChatList = ({ onSelectConversation }) => {
                 contentLast={conv.lastMessage}
                 timeUpdateLast={conv.updatedAt}
                 isGroup={conv.isGroup}
-
               />
             </div>
           ))

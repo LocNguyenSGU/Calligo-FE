@@ -26,7 +26,7 @@ const InfoQuickChat = ({ img, title, nameSenderLast, contentLast, timeUpdateLast
             isActive ? "bg-blue-200 hover:bg-blue-200" : ""
         }`}
         >
-            <Avatar src={img} />
+            <Avatar src={img}/>
             <div className="flex flex-col ml-3 w-full">
                 <div className="flex justify-between">
                     <p className="text-sm font-medium flex items-center">
