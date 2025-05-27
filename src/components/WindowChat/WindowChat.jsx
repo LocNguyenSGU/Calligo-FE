@@ -27,6 +27,9 @@ const WindowChat = ({
   const [fileList, setFileList] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState([]);
+  // const [previews, setPreviews] = useState([]);
+
+
 
   const getLinkAvatarByIdAccount = (idAccountSent) => {
     const participant = participants.find(p => p.idAccount == idAccountSent);
@@ -91,25 +94,61 @@ const WindowChat = ({
     }
   };
 
-  const handleFileChange = ({ fileList }) => setFileList(fileList);
+  const handleFileChange = ({ fileList }) => {
+    console.log("File list mới:", fileList);
+    setFileList(fileList);
+  };
+
+
+  const getAttachmentType = (fileType) => {
+    if (fileType.startsWith("image/")) {
+      if (fileType === "image/gif") return "GIF";
+      return "IMAGE";
+    } else if (fileType.startsWith("video/")) {
+      return "VIDEO";
+    } else if (fileType.startsWith("audio/")) {
+      return "AUDIO";
+    } else {
+      return "FILE";
+    }
+  };
 
   const handleUploadImages = async () => {
     try {
+      console.log("Bắt đầu upload...");
       setUploading(true);
 
       const uploadPromises = fileList.map((file, index) => {
+        const fileObj = file.originFileObj;
+        const fileType = fileObj.type;
+        const attachmentType = getAttachmentType(fileType);
+
+        console.log(`File ${index + 1}:`, {
+          name: fileObj.name,
+          type: fileType,
+          attachmentType,
+        });
+
         return new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           const formData = new FormData();
-          formData.append("file", file.originFileObj);
+          formData.append("file", fileObj);
           formData.append("upload_preset", "calligo_preset");
 
-          xhr.open("POST", "https://api.cloudinary.com/v1_1/doycy5gbl/image/upload", true);
+          // ⚠ Cloudinary upload endpoint mặc định là image. Dùng video thì phải đổi URL:
+          let uploadUrl = "https://api.cloudinary.com/v1_1/doycy5gbl/image/upload";
+          if (attachmentType === "VIDEO") {
+            uploadUrl = "https://api.cloudinary.com/v1_1/doycy5gbl/video/upload";
+          } else if (attachmentType === "AUDIO") {
+            uploadUrl = "https://api.cloudinary.com/v1_1/doycy5gbl/raw/upload";
+          }
+
+          xhr.open("POST", uploadUrl, true);
 
           xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
               const progress = Math.round((event.loaded / event.total) * 100);
-              console.log(`Ảnh ${index + 1} đang upload: ${progress}%`);
+              console.log(`Tệp ${index + 1} đang upload: ${progress}%`);
               setUploadProgress((prev) => {
                 const newProgress = [...prev];
                 newProgress[index] = progress;
@@ -118,39 +157,50 @@ const WindowChat = ({
             }
           };
 
-          xhr.onload = () =>
+          xhr.onload = () => {
+            const res = JSON.parse(xhr.responseText);
+            console.log(`Upload thành công file ${index + 1}:`, res);
             resolve({
-              url: JSON.parse(xhr.responseText).secure_url,
+              url: res.secure_url,
               order: index,
-              type: "IMAGE",
+              type: attachmentType,
               timeUpload: new Date().toISOString(),
             });
-          xhr.onerror = reject;
+          };
+
+          xhr.onerror = () => {
+            console.error(`Upload thất bại cho file ${index + 1}`);
+            reject(new Error(`Upload failed for file ${fileObj.name}`));
+          };
 
           xhr.send(formData);
         });
       });
 
       const uploadedAttachments = await Promise.all(uploadPromises);
+      console.log("Toàn bộ tệp đã upload thành công:", uploadedAttachments);
 
       const messageData = {
         idConversation,
         idAccountSent: myAccountId,
-        content: "", // không có văn bản
+        content: "",
         type: "NONTEXT",
         attachments: uploadedAttachments,
         timeSent: new Date().toISOString(),
       };
 
+      console.log("Tin nhắn chuẩn bị gửi:", messageData);
+
+      // 👉 TẠM TẮT gửi xuống server
       sendMessage(idConversation, messageData);
 
-      message.success("Gửi hình ảnh thành công!");
+      message.success("Upload file thành công!");
       setInput("");
       setFileList([]);
       setUploadProgress([]);
     } catch (error) {
       console.error("Upload thất bại:", error);
-      message.error("Tải ảnh thất bại");
+      message.error("Tải file thất bại");
     } finally {
       setUploading(false);
     }
@@ -235,11 +285,6 @@ const WindowChat = ({
                   }}
                 >
                   {msg.type == "NONTEXT" ? (
-                    // <img
-                    //   src={msg.attachments[0].url}
-                    //   alt="img"
-                    //   className="rounded-md max-w-full"
-                    // />
                     <div className="space-y-3">
                       {msg.attachments
                         .sort((a, b) => a.order - b.order)
