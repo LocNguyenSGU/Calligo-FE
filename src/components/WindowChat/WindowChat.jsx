@@ -8,6 +8,9 @@ import { useChat } from "../../context/ChatContext";
 import { Upload, Button, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { SendOutlined } from '@ant-design/icons';
+import { Image, Card, Typography } from "antd";
+const { Link, Text } = Typography;
+
 
 const WindowChat = ({
   src,
@@ -101,16 +104,12 @@ const WindowChat = ({
           formData.append("file", file.originFileObj);
           formData.append("upload_preset", "calligo_preset");
 
-          xhr.open(
-            "POST",
-            "https://api.cloudinary.com/v1_1/doycy5gbl/image/upload",
-            true
-          );
+          xhr.open("POST", "https://api.cloudinary.com/v1_1/doycy5gbl/image/upload", true);
 
           xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
               const progress = Math.round((event.loaded / event.total) * 100);
-              console.log(`Ảnh ${index + 1} đang upload: ${progress}%`); // 👉 log ra % tiến trình
+              console.log(`Ảnh ${index + 1} đang upload: ${progress}%`);
               setUploadProgress((prev) => {
                 const newProgress = [...prev];
                 newProgress[index] = progress;
@@ -120,24 +119,30 @@ const WindowChat = ({
           };
 
           xhr.onload = () =>
-            resolve(JSON.parse(xhr.responseText).secure_url);
+            resolve({
+              url: JSON.parse(xhr.responseText).secure_url,
+              order: index,
+              type: "IMAGE",
+              timeUpload: new Date().toISOString(),
+            });
           xhr.onerror = reject;
 
           xhr.send(formData);
         });
       });
 
-      const uploadedUrls = await Promise.all(uploadPromises);
+      const uploadedAttachments = await Promise.all(uploadPromises);
 
-      for (const url of uploadedUrls) {
-        console.log(url)
-        sendMessage(idConversation, {
-          idConversation,
-          idAccountSent: myAccountId,
-          content: url,
-          type: "IMAGE",
-        });
-      }
+      const messageData = {
+        idConversation,
+        idAccountSent: myAccountId,
+        content: "", // không có văn bản
+        type: "NONTEXT",
+        attachments: uploadedAttachments,
+        timeSent: new Date().toISOString(),
+      };
+
+      sendMessage(idConversation, messageData);
 
       message.success("Gửi hình ảnh thành công!");
       setInput("");
@@ -156,7 +161,7 @@ const WindowChat = ({
       {/* Header */}
       <div className="flex justify-between items-center p-3 bg-white border border-gray-200 border-t-0">
         <div className="flex gap-2">
-          <Avatar src={src || "/public/sidebar/woman.png"}/>
+          <Avatar src={src || "/public/sidebar/woman.png"} />
           <div className="flex flex-col gap-[2px]">
             <span className="font-medium">{title}</span>
             {!isGroup ? (
@@ -229,12 +234,81 @@ const WindowChat = ({
                       : "6px 18px 18px 6px",
                   }}
                 >
-                  {msg.type === "IMAGE" ? (
-                    <img
-                      src={msg.content}
-                      alt="img"
-                      className="rounded-md max-w-full"
-                    />
+                  {msg.type == "NONTEXT" ? (
+                    // <img
+                    //   src={msg.attachments[0].url}
+                    //   alt="img"
+                    //   className="rounded-md max-w-full"
+                    // />
+                    <div className="space-y-3">
+                      {msg.attachments
+                        .sort((a, b) => a.order - b.order)
+                        .map((attachment, index) => {
+                          switch (attachment.type) {
+                            case "IMAGE":
+                            case "GIF":
+                            case "STICKER":
+                              return (
+                                <Card key={index} bordered={false} bodyStyle={{ padding: 8 }}>
+                                  <Image
+                                    src={attachment.url}
+                                    alt="Ảnh đính kèm"
+                                    width={200}
+                                    style={{ borderRadius: 8 }}
+                                  />
+                                </Card>
+                              );
+
+                            case "VIDEO":
+                              return (
+                                <Card key={index} bordered={false} bodyStyle={{ padding: 8 }}>
+                                  <video
+                                    controls
+                                    style={{ width: "100%", borderRadius: 8 }}
+                                    src={attachment.url}
+                                  >
+                                    Trình duyệt không hỗ trợ video.
+                                  </video>
+                                </Card>
+                              );
+
+                            case "AUDIO":
+                              return (
+                                <Card key={index} bordered={false} bodyStyle={{ padding: 8 }}>
+                                  <audio controls style={{ width: "100%" }}>
+                                    <source src={attachment.url} type="audio/mpeg" />
+                                    Trình duyệt không hỗ trợ audio.
+                                  </audio>
+                                </Card>
+                              );
+
+                            case "FILE":
+                              return (
+                                <Card key={index} bordered={false} bodyStyle={{ padding: 8 }}>
+                                  <Link
+                                    href={attachment.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    📎 Mở file đính kèm
+                                  </Link>
+                                </Card>
+                              );
+
+                            default:
+                              return (
+                                <Text type="danger" key={index}>
+                                  ❌ Không hỗ trợ loại tệp: {attachment.type}
+                                </Text>
+                              );
+                          }
+                        })}
+                      {msg.content && (
+                        <Text className="block mt-1 text-base text-gray-800">
+                          {msg.content}
+                        </Text>
+                      )}
+                    </div>
                   ) : (
                     msg.content
                   )}
