@@ -27,7 +27,7 @@ const WindowChat = ({
   const [fileList, setFileList] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState([]);
-  // const [previews, setPreviews] = useState([]);
+  const [previews, setPreviews] = useState([]);
 
 
 
@@ -94,11 +94,22 @@ const WindowChat = ({
     }
   };
 
+  // const handleFileChange = ({ fileList }) => {
+  //   console.log("File list mới:", fileList);
+  //   setFileList(fileList);
+  // };
+
   const handleFileChange = ({ fileList }) => {
-    console.log("File list mới:", fileList);
+    const files = fileList.map(f => f.originFileObj);
+    const newPreviews = files.map(file => ({
+      file,
+      url: URL.createObjectURL(file),
+      progress: 0,
+      type: file.type,
+    }));
+    setPreviews(newPreviews);
     setFileList(fileList);
   };
-
 
   const getAttachmentType = (fileType) => {
     if (fileType.startsWith("image/")) {
@@ -148,12 +159,28 @@ const WindowChat = ({
           xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
               const progress = Math.round((event.loaded / event.total) * 100);
-              console.log(`Tệp ${index + 1} đang upload: ${progress}%`);
-              setUploadProgress((prev) => {
-                const newProgress = [...prev];
-                newProgress[index] = progress;
-                return newProgress;
-              });
+              // setPreviews(prev => {
+              //   const updated = [...prev];
+              //   updated[index].progress = progress;
+              //   return updated;
+              // });
+              setPreviews(prev =>
+                prev.map((item, i) => {
+                  if (i === index) {
+                    const updatedItem = { ...item, progress };
+                    console.log("Updated item:", updatedItem); // ✅ chính xác
+                    return updatedItem;
+                  }
+                  return item;
+                })
+              );
+
+              // console.log(`Tệp ${index + 1} đang upload: ${progress}%`);
+              // setUploadProgress((prev) => {
+              //   const newProgress = [...prev];
+              //   newProgress[index] = progress;
+              //   return newProgress;
+              // });
             }
           };
 
@@ -198,6 +225,7 @@ const WindowChat = ({
       setInput("");
       setFileList([]);
       setUploadProgress([]);
+      setPreviews([])
     } catch (error) {
       console.error("Upload thất bại:", error);
       message.error("Tải file thất bại");
@@ -389,6 +417,58 @@ const WindowChat = ({
           >
             <Button icon={<UploadOutlined />}>Tải ảnh</Button>
           </Upload>
+        </div>
+
+        <div className="thumbnail">
+          {previews.length > 0 && (
+            <div className="flex flex-wrap gap-2 p-2">
+              {previews.map((preview, index) => (
+                <div key={index} className="relative w-[120px] h-[120px] rounded overflow-hidden shadow-md">
+                  {preview.type.startsWith("video/") ? (
+                    <video
+                      src={preview.url}
+                      className="w-full h-full object-cover"
+                      controls={preview.progress >= 100}
+                      muted
+                    />
+                  ) : (
+                    <img
+                      src={preview.url}
+                      className="w-full h-full object-cover"
+                      alt={`preview-${index}`}
+                    />
+                  )}
+                  
+                  {preview.progress > 1 && preview.progress < 100 && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10"
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10,
+                      }}
+                    >
+                      <div className="w-[80%] h-2 bg-gray-300 rounded overflow-hidden">
+                        <div
+                          className="h-2 bg-blue-500 rounded transition-all duration-300"
+                          style={{ width: `${preview.progress}%` }}
+                        />
+                      </div>
+                      <div className="absolute bottom-2 right-2 text-white text-xs font-medium">
+                        {preview.progress}%
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Input và nút gửi nằm cùng hàng */}
