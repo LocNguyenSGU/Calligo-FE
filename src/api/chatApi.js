@@ -8,10 +8,14 @@ const chatApi = {
         const response = axios.get(`${prefixAPI}/conversation/idAccount/${currentUser.idAccount}`)
         return response
     },
-    
 
     getMessages: async (idConversation) => {
         const response = axios.get(`${prefixAPI}/messages/${idConversation}`) 
+        return response
+    },
+
+     getMessagesByIdConversation: async (idConversation, page, size) => {
+        const response = axios.get(`${prefixAPI}/messages/conversation/${idConversation}?sortDirection=asc&page=${page}&size=${size}`) 
         return response
     },
 }

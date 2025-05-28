@@ -1,19 +1,18 @@
-import TextArea from "antd/es/input/TextArea";
 import Avatar from "../shared/Avatar";
 import IconChatList from "../shared/IconChatList";
 
 /* eslint-disable react/prop-types */
-const InfoPanel = ({ isGroup = false }) => {
+const InfoPanel = ({ isGroup = false, src, title }) => {
     return (
         <div className='w-[34%] h-screen bg-gray-200'>
             <div className="header-info-panel flex justify-center items-center h-[73px] bg-white border border-gray-200 border-t-0">
                 {isGroup ? <span className="font-medium text-lg">Thông tin nhóm</span> : <span className="font-medium text-lg">Thông tin hội thoại</span>}
             </div>
-            <div className="info-action-block bg-white pb-3">
+            <div className="info-action-block bg-white pb-3 border" style={{ borderTop: "none" }}>
                 <div className="info-chat flex items-center justify-center flex-col gap-2 pt-5">
-                    <Avatar src="/public/sidebar/woman.png" size="56px"></Avatar>
+                    <Avatar src={src} size="56px"></Avatar>
                     <div className="flex items-center gap-2">
-                        <div className="title font-medium">Nhóm báo</div>
+                        <div className="title font-medium">{title}</div>
                         <IconChatList src="/public/infopanel/pencil.png" isRounded={true} size="16px" isSmaller={true}></IconChatList>
                     </div>
                 </div>
@@ -38,8 +37,10 @@ const InfoPanel = ({ isGroup = false }) => {
                     </>}
                 </div>
             </div>
-            <div className="w-full h-full bg-cyan-300">
-                Chưa làm
+            <div
+                className="w-full h-full"
+                style={{ backgroundImage: `url(${src})`, backgroundSize: "cover", backgroundPosition: "center" }}
+            >
             </div>
         </div>
     );

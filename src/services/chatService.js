@@ -11,12 +11,16 @@ const chatService = {
         return response.data;
     },
 
+    getMessagesByIdConversation: async (idConversation, page, size) => {
+        const response = await chatApi.getMessagesByIdConversation(idConversation, page, size)
+        return response.data;
+    },
+
     nameConversation: async () => {
         const nameStorage = localStorage.getItem("infoUser");
       const name = JSON.parse(nameStorage);
       return name.firstName.trim();
     },
-
     
 }
 export default chatService;

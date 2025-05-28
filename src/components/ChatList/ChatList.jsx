@@ -1,10 +1,9 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Seperate from "../shared/Seperate";
 import InfoQuickChat from "./InfoQuickChat/InfoQuickChat";
 import chatService from "../../services/chatService";
 import { useChat } from "../../context/ChatContext";
-import { number } from "yup";
 
 const ChatList = ({ onSelectConversation }) => {
   const [conversations, setConversations] = useState([]);

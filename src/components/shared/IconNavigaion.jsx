@@ -4,7 +4,7 @@ const IconNavigaion = ({ src, alt, size = "28px", isActive = false }) => {
     return (
       <div
       className={`${
-        isActive ? "bg-red-400 hover:bg-red-400" : "bg-red-100 hover:bg-red-200"
+        isActive ? "bg-red-400 hover:bg-red-400" : "bg-blue-100 hover:bg-red-200"
       } p-2 rounded-md  cursor-pointer w-12 h-12 flex items-center justify-center`}
       >
         <img

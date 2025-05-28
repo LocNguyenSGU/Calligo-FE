@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import TextArea from "antd/es/input/TextArea";
 import Avatar from "../shared/Avatar";
 import IconChatList from "../shared/IconChatList";
@@ -28,6 +28,9 @@ const WindowChat = ({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState([]);
   const [previews, setPreviews] = useState([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalPage, setTotalPage] = useState(0);
 
 
 
@@ -55,18 +58,42 @@ const WindowChat = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [allMessages]);
 
-  useEffect(() => {
-    const fetchMessages = async () => {
+  // useEffect(() => {
+  //   const fetchMessages = async () => {
+  //     try {
+  //       const response = await chatService.getMessagesByIdConversation(idConversation);
+  //       if (!Array.isArray(response.data.data)) throw new Error("API không hợp lệ!");
+  //       setInitialMessages(response.data.data);
+  //     } catch (error) {
+  //       console.error("Lỗi khi tải tin nhắn:", error);
+  //     }
+  //   };
+
+  //   fetchMessages();
+  // }, [idConversation]);
+
+
+    useEffect(() => {
+    const fetchLastPageMessages = async () => {
       try {
-        const response = await chatService.getMessages(idConversation);
-        if (!Array.isArray(response)) throw new Error("API không hợp lệ!");
-        setInitialMessages(response);
-      } catch (error) {
-        console.error("Lỗi khi tải tin nhắn:", error);
+        // Gọi API để lấy page 0 trước, để biết totalPage
+        const preview = await chatService.getMessagesByIdConversation(idConversation, 0, pageSize);
+        const lastPage = Math.max(preview.data.totalPage - 1, 0); // totalPage tính từ 1 nên -1
+        setTotalPage(preview.data.totalPage);
+        console.log("TOTAL PAGE", preview.data.totalPage)
+
+        // Gọi trang cuối
+        const response = await chatService.getMessagesByIdConversation(idConversation, lastPage, pageSize);
+        const pageData = response.data.data
+
+        setInitialMessages(pageData);
+        setCurrentPage(pageData.currentPage);
+      } catch (err) {
+        console.error("Không tải được tin nhắn:", err);
       }
     };
 
-    fetchMessages();
+    fetchLastPageMessages();
   }, [idConversation]);
 
   const handleSendMessage = async () => {
@@ -237,7 +264,7 @@ const WindowChat = ({
   return (
     <div className="w-[66%] h-screen bg-gray-200 flex flex-col">
       {/* Header */}
-      <div className="flex justify-between items-center p-3 bg-white border border-gray-200 border-t-0">
+      <div className="flex justify-between items-center p-3 bg-white border border-gray-200 border-t-0 border-r-0" style={{ borderRight: "none" }}>
         <div className="flex gap-2">
           <Avatar src={src || "/public/sidebar/woman.png"} />
           <div className="flex flex-col gap-[2px]">
@@ -281,7 +308,7 @@ const WindowChat = ({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-400 p-3 pr-4 bg-gray-200 " style={{ marginBottom: "100px" }}>
+      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-400 p-3 pr-4 bg-gray-200 border border-gray-300" style={{ marginBottom: "100px" }}>
         {allMessages.map((msg, index) => {
           const isMine = msg.idAccountSent == myAccountId;
           const prevMsg = allMessages[index - 1];
@@ -403,7 +430,7 @@ const WindowChat = ({
 
       {/* Input */}
       <div
-        className="bg-white p-2 border-t fixed bottom-0"
+        className="bg-white p-2 border-t fixed bottom-0 border border-gray-300"
         style={{ width: '48.18%' }}
       >
         {/* Upload ảnh */}
