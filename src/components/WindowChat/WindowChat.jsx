@@ -8,8 +8,10 @@ import { useChat } from "../../context/ChatContext";
 import { Upload, Button, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { SendOutlined } from '@ant-design/icons';
-import { Image, Card, Typography } from "antd";
+import { Image, Card, Typography, Spin } from "antd";
 const { Link, Text } = Typography;
+import { ArrowDownOutlined } from "@ant-design/icons";
+
 
 
 const WindowChat = ({
@@ -31,7 +33,11 @@ const WindowChat = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
   const [totalPage, setTotalPage] = useState(0);
-
+  const chatContainerRef = useRef(null);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [loadingOldMessages, setLoadingOldMessages] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [isFullMessage, setIsFullMessage] = useState(false);
 
 
   const getLinkAvatarByIdAccount = (idAccountSent) => {
@@ -54,40 +60,59 @@ const WindowChat = ({
     return combined;
   }, [initialMessages, messages, idConversation]);
 
-  useEffect(() => {
+  const scrollToBottom = () => {
+    setIsFullMessage(false)
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [allMessages]);
+  };
 
-  // useEffect(() => {
-  //   const fetchMessages = async () => {
-  //     try {
-  //       const response = await chatService.getMessagesByIdConversation(idConversation);
-  //       if (!Array.isArray(response.data.data)) throw new Error("API không hợp lệ!");
-  //       setInitialMessages(response.data.data);
-  //     } catch (error) {
-  //       console.error("Lỗi khi tải tin nhắn:", error);
-  //     }
-  //   };
+  useEffect(() => {
+    if (isFirstLoad && initialMessages.length > 0) {
+      scrollToBottom();
+      setIsFirstLoad(false); // ❌ không scroll tự động nữa sau lần đầu
+      setIsFullMessage(false);
+    }
+  }, [initialMessages, isFirstLoad]);
 
-  //   fetchMessages();
-  // }, [idConversation]);
+  useEffect(() => {
+    if (messages) {
+      scrollToBottom()
+    }
+  }, [messages])
+
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    const handleScrollVisibility = () => {
+      const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 300;
+      setShowScrollToBottom(!nearBottom);
+    };
+
+    container.addEventListener("scroll", handleScrollVisibility);
+    return () => container.removeEventListener("scroll", handleScrollVisibility);
+  }, []);
 
 
-    useEffect(() => {
+  useEffect(() => {
     const fetchLastPageMessages = async () => {
       try {
-        // Gọi API để lấy page 0 trước, để biết totalPage
         const preview = await chatService.getMessagesByIdConversation(idConversation, 0, pageSize);
-        const lastPage = Math.max(preview.data.totalPage - 1, 0); // totalPage tính từ 1 nên -1
-        setTotalPage(preview.data.totalPage);
-        console.log("TOTAL PAGE", preview.data.totalPage)
+        const totalPage = preview.data.totalPage;
+        const lastPage = Math.max(totalPage - 1, 0);
+        setTotalPage(totalPage);
 
-        // Gọi trang cuối
-        const response = await chatService.getMessagesByIdConversation(idConversation, lastPage, pageSize);
-        const pageData = response.data.data
+        let allMessages = [];
+        let page = lastPage;
 
-        setInitialMessages(pageData);
-        setCurrentPage(pageData.currentPage);
+        while (page >= 0 && allMessages.length < pageSize) { // muốn hiển thị ít nhất 20 tin nhắn
+          const res = await chatService.getMessagesByIdConversation(idConversation, page, pageSize);
+          console.log("Tin nhắn mới load thêm", res.data)
+          setIsFullMessage(false)
+          allMessages = [...res.data.data, ...allMessages]; // prepend
+          page--;
+        }
+
+        setInitialMessages(allMessages);
+        setCurrentPage(Math.max(page + 1, 0)); // trang hiện tại đã load xong
+        setIsFirstLoad(true);
       } catch (err) {
         console.error("Không tải được tin nhắn:", err);
       }
@@ -95,6 +120,42 @@ const WindowChat = ({
 
     fetchLastPageMessages();
   }, [idConversation]);
+
+
+
+  const handleScroll = async () => {
+    if (chatContainerRef.current.scrollTop === 0) {
+      // ✅ Ngăn tải nếu đã ở trang đầu
+      if (currentPage === 0) {
+        setIsFullMessage(true)
+        console.log("Đã ở trang đầu, không còn tin nhắn để tải.");
+        return;
+      }
+      setLoadingOldMessages(true);
+      try {
+        const newPage = currentPage - 1;
+
+        const response = await chatService.getMessagesByIdConversation(idConversation, newPage, pageSize);
+        const oldMessages = response.data.data;
+
+        const oldHeight = chatContainerRef.current.scrollHeight;
+
+        setInitialMessages((prev) => [...oldMessages, ...prev]);
+        setCurrentPage(newPage);
+        setIsFirstLoad(false)
+
+        setTimeout(() => {
+          const newHeight = chatContainerRef.current.scrollHeight;
+          chatContainerRef.current.scrollTop = newHeight - oldHeight;
+        }, 0);
+        setLoadingOldMessages(false)
+      } catch (err) {
+        setIsFullMessage(false);
+        console.error("Lỗi khi tải thêm tin nhắn:", err);
+        setLoadingOldMessages(false);
+      }
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!input.trim() && fileList.length === 0) return;
@@ -308,124 +369,170 @@ const WindowChat = ({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-400 p-3 pr-4 bg-gray-200 border border-gray-300" style={{ marginBottom: "100px" }}>
+      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-400 p-3 pr-4 bg-gray-200 border border-gray-300"
+        style={{ marginBottom: "100px" }}
+        ref={chatContainerRef}
+        onScroll={handleScroll}
+      >
+        {isFullMessage && (
+          <div style={{ textAlign: "center", padding: "10px" }}>
+            <div className="px-4 py-1 bg-gray-200 text-gray-600 text-xs rounded-full shadow-sm">
+              Bạn đã xem hết tin nhắn
+            </div>
+          </div>
+        )}
+        {loadingOldMessages && (
+          <div style={{ textAlign: "center", padding: "10px" }}>
+            <Spin size="small" style={{ display: 'block', margin: '10px auto' }} />
+          </div>
+        )}
         {allMessages.map((msg, index) => {
           const isMine = msg.idAccountSent == myAccountId;
           const prevMsg = allMessages[index - 1];
           const isFirstOfGroup =
             !prevMsg || prevMsg.idAccountSent !== msg.idAccountSent;
-
+          const showDateDivider =
+            !prevMsg || new Date(prevMsg.timeSent).toDateString() !== new Date(msg.timeSent).toDateString();
           return (
-            <div
-              key={msg.idMessage}
-              className={`flex mb-2 ${isMine ? "justify-end" : "justify-start"
-                }`}
-            >
-              <div className={`flex ${isMine ? "flex-row-reverse" : "flex-row"} items-start gap-2 w-full`}>
-                {isFirstOfGroup && !isMine && (
-                  <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    <Avatar src={getLinkAvatarByIdAccount(msg.idAccountSent)} size="30px"></Avatar>
+            <>
+              {showDateDivider && (
+                <div className="flex justify-center my-4">
+                  <div className="px-4 py-1 bg-gray-200 text-gray-600 text-xs rounded-full shadow-sm">
+                    {new Date(msg.timeSent).toLocaleDateString("vi-VN", {
+                      weekday: "short",
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
                   </div>
-                )}
-                {!isFirstOfGroup && !isMine && <div className="w-8" />} {/* Spacer */}
-
-                <div
-                  className={`px-4 py-2 rounded-xl max-w-[75%] text-gray-700 text-sm break-words box-shadow-message whitespace-pre-wrap ${isMine ? "bg-blue-100" : "bg-white"
-                    }`}
-                  style={{
-                    marginTop: isFirstOfGroup ? "12px" : "2px",
-                    borderRadius: isFirstOfGroup
-                      ? "18px 18px 18px 4px"
-                      : "6px 18px 18px 6px",
-                  }}
-                >
-                  {msg.type == "NONTEXT" ? (
-                    <div className="space-y-3">
-                      {msg.attachments
-                        .sort((a, b) => a.order - b.order)
-                        .map((attachment, index) => {
-                          switch (attachment.type) {
-                            case "IMAGE":
-                            case "GIF":
-                            case "STICKER":
-                              return (
-                                <Card key={index} bordered={false} bodyStyle={{ padding: 8 }}>
-                                  <Image
-                                    src={attachment.url}
-                                    alt="Ảnh đính kèm"
-                                    width={200}
-                                    style={{ borderRadius: 8 }}
-                                  />
-                                </Card>
-                              );
-
-                            case "VIDEO":
-                              return (
-                                <Card key={index} bordered={false} bodyStyle={{ padding: 8 }}>
-                                  <video
-                                    controls
-                                    style={{ width: "100%", borderRadius: 8 }}
-                                    src={attachment.url}
-                                  >
-                                    Trình duyệt không hỗ trợ video.
-                                  </video>
-                                </Card>
-                              );
-
-                            case "AUDIO":
-                              return (
-                                <Card key={index} bordered={false} bodyStyle={{ padding: 8 }}>
-                                  <audio controls style={{ width: "100%" }}>
-                                    <source src={attachment.url} type="audio/mpeg" />
-                                    Trình duyệt không hỗ trợ audio.
-                                  </audio>
-                                </Card>
-                              );
-
-                            case "FILE":
-                              return (
-                                <Card key={index} bordered={false} bodyStyle={{ padding: 8 }}>
-                                  <Link
-                                    href={attachment.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    📎 Mở file đính kèm
-                                  </Link>
-                                </Card>
-                              );
-
-                            default:
-                              return (
-                                <Text type="danger" key={index}>
-                                  ❌ Không hỗ trợ loại tệp: {attachment.type}
-                                </Text>
-                              );
-                          }
-                        })}
-                      {msg.content && (
-                        <Text className="block mt-1 text-base text-gray-800">
-                          {msg.content}
-                        </Text>
-                      )}
+                </div>
+              )}
+              <div
+                key={`${msg.idMessage || "temp"}-${index}-${Date.now()}`}
+                className={`flex mb-2 ${isMine ? "justify-end" : "justify-start"
+                  }`}
+              >
+                <div className={`flex ${isMine ? "flex-row-reverse" : "flex-row"} items-start gap-2 w-full`}>
+                  {isFirstOfGroup && !isMine && (
+                    <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      <Avatar src={getLinkAvatarByIdAccount(msg.idAccountSent)} size="30px"></Avatar>
                     </div>
-                  ) : (
-                    msg.content
                   )}
-                  <div className="text-xs text-right text-gray-500 mt-1">
-                    {msg.timeSent
-                      ? new Date(msg.timeSent).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                      : ""}
+                  {!isFirstOfGroup && !isMine && <div className="w-8" />} {/* Spacer */}
+
+                  <div
+                    className={`px-4 py-2 rounded-xl max-w-[75%] text-gray-700 text-sm break-words box-shadow-message whitespace-pre-wrap ${isMine ? "bg-blue-100" : "bg-white"
+                      }`}
+                    style={{
+                      marginTop: isFirstOfGroup ? "12px" : "2px",
+                      borderRadius: isFirstOfGroup
+                        ? "18px 18px 18px 4px"
+                        : "6px 18px 18px 6px",
+                    }}
+                  >
+                    {msg.type == "NONTEXT" ? (
+                      <div className="space-y-3">
+                        {msg.attachments
+                          .sort((a, b) => a.order - b.order)
+                          .map((attachment, index) => {
+                            switch (attachment.type) {
+                              case "IMAGE":
+                              case "GIF":
+                              case "STICKER":
+                                return (
+                                  <Card key={attachment.url} bordered={false} bodyStyle={{ padding: 8 }}>
+                                    <Image
+                                      src={attachment.url}
+                                      alt="Ảnh đính kèm"
+                                      width={200}
+                                      style={{ borderRadius: 8 }}
+                                    />
+                                  </Card>
+                                );
+
+                              case "VIDEO":
+                                return (
+                                  <Card key={attachment.url} bordered={false} bodyStyle={{ padding: 8 }}>
+                                    <video
+                                      controls
+                                      style={{ width: "100%", borderRadius: 8 }}
+                                      src={attachment.url}
+                                    >
+                                      Trình duyệt không hỗ trợ video.
+                                    </video>
+                                  </Card>
+                                );
+
+                              case "AUDIO":
+                                return (
+                                  <Card key={attachment.url} bordered={false} bodyStyle={{ padding: 8 }}>
+                                    <audio controls style={{ width: "100%" }}>
+                                      <source src={attachment.url} type="audio/mpeg" />
+                                      Trình duyệt không hỗ trợ audio.
+                                    </audio>
+                                  </Card>
+                                );
+
+                              case "FILE":
+                                return (
+                                  <Card key={attachment.url} bordered={false} bodyStyle={{ padding: 8 }}>
+                                    <Link
+                                      href={attachment.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      📎 Mở file đính kèm
+                                    </Link>
+                                  </Card>
+                                );
+
+                              default:
+                                return (
+                                  <Text type="danger" key={index}>
+                                    ❌ Không hỗ trợ loại tệp: {attachment.type}
+                                  </Text>
+                                );
+                            }
+                          })}
+                        {msg.content && (
+                          <Text className="block mt-1 text-base text-gray-800">
+                            {msg.content}
+                          </Text>
+                        )}
+                      </div>
+                    ) : (
+                      msg.content
+                    )}
+                    <div className="text-xs text-right text-gray-500 mt-1">
+                      {msg.timeSent
+                        ? new Date(msg.timeSent).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                        : ""}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </>
+
           );
         })}
         <div ref={messagesEndRef} />
+        {showScrollToBottom && (
+          <Button
+            shape="circle"
+            icon={<ArrowDownOutlined />}
+            onClick={scrollToBottom}
+            style={{
+              position: "absolute",
+              bottom: 110,
+              left: 570,
+              zIndex: 10,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            }}
+          />
+        )}
       </div>
 
       {/* Input */}
@@ -465,7 +572,7 @@ const WindowChat = ({
                       alt={`preview-${index}`}
                     />
                   )}
-                  
+
                   {preview.progress > 1 && preview.progress < 100 && (
                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10"
                       style={{
